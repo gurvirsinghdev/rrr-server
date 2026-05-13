@@ -25,6 +25,7 @@
     "@types/node": "^20.11.17",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
+    "prettier": "^3.8.3",
     "tsx": "^4.7.1",
     "typescript": "^5.8.3"
   }
