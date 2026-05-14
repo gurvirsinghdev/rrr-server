@@ -48,6 +48,11 @@ authRouter.post("/login", async (c) => {
   );
   return c.json({
     token,
-    userRole: user.role,
+    user: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+    },
   });
 });
