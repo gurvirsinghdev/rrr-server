@@ -1,8 +1,10 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   integer,
   pgEnum,
   pgTable,
+  serial,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -46,6 +48,7 @@ export const toiletStatusEnum = pgEnum("toilet_status_enum", [
 ]);
 export const toiletsTable = pgTable("toilets", {
   id: text("id").primaryKey().notNull(),
+  sno: serial("sno"),
   type: toiletTypeEnum("type").notNull(),
   status: toiletStatusEnum("status").default("available"),
   currentLocation: text("current_location"),

@@ -32,6 +32,22 @@ toiletsRouter.get("/list", async (c) => {
   return c.json({ toilets });
 });
 
+toiletsRouter.get("/list-available", async (c) => {
+  const toilets = await db
+    .select()
+    .from(toiletsTable)
+    .where(eq(toiletsTable.status, "available"));
+  return c.json({ toilets });
+});
+
+toiletsRouter.get("/list-damaged", async (c) => {
+  const toilets = await db
+    .select()
+    .from(toiletsTable)
+    .where(eq(toiletsTable.status, "damaged"));
+  return c.json({ toilets });
+});
+
 toiletsRouter.get("/list-maintenance", async (c) => {
   const toilets = await db
     .select()
