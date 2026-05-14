@@ -1,0 +1,1 @@
+ALTER TABLE "fences" ADD COLUMN "maintenance_quantity" integer DEFAULT 0 NOT NULL;

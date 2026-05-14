@@ -1,3 +1,4 @@
+import type { UserJWTPayload } from "@/types.js";
 import type { Context, Next } from "hono";
 import jwt from "jsonwebtoken";
 
@@ -15,4 +16,11 @@ export const authMiddleware = async (c: Context, next: Next) => {
   } catch {
     return c.json({ error: "Invalid or expired token" }, 401);
   }
+};
+
+export const isAdmin = async (c: Context, next: Next) => {
+  const user = c.get("user") as undefined | UserJWTPayload;
+  if (!(user?.role === "admin"))
+    return c.json({ error: "Admin access required" }, 403);
+  await next();
 };

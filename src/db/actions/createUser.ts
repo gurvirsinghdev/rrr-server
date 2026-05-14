@@ -3,11 +3,7 @@ import { uuidv7 } from "uuidv7";
 
 import { db } from "@/db/index.js";
 import { usersTable } from "@/db/schema.js";
-
-type UserData = typeof usersTable.$inferInsert;
-export type CreateUserInput = Omit<UserData, "id" | "passwordHash"> & {
-  password: UserData["passwordHash"];
-};
+import type { CreateUserInput } from "@/types.js";
 
 export default async function createUser(data: CreateUserInput) {
   const id = uuidv7();

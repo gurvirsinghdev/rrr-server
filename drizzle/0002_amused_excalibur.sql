@@ -1,0 +1,1 @@
+ALTER TABLE "fences_inventory" RENAME TO "fences";

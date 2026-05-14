@@ -42,7 +42,7 @@ authRouter.post("/login", async (c) => {
   }
 
   const token = jwt.sign(
-    { userId: user.id, role: user.role },
+    { userId: user.id, role: user.role } satisfies UserJWTPayload,
     process.env.JWT_SECRET!,
     { expiresIn: "24h" },
   );

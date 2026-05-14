@@ -1,0 +1,1 @@
+ALTER TABLE "fences" ADD CONSTRAINT "fences_type_unique" UNIQUE("type");

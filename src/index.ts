@@ -4,6 +4,7 @@ import { serve } from "@hono/node-server";
 import { seedDB } from "./db/seed.js";
 import { authRouter } from "./routes/authRouter.js";
 import { cors } from "hono/cors";
+import { inventoryRouter } from "./routes/inventoryRouter.js";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
@@ -12,6 +13,7 @@ if (!process.env.JWT_SECRET) {
 const app = new Hono();
 app.use("/*", cors());
 app.route("/auth", authRouter);
+app.route("/inventory", inventoryRouter);
 
 serve(
   {
