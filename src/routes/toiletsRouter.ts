@@ -5,7 +5,7 @@ import {
   toiletTypeEnum,
 } from "@/db/schema.js";
 import { authMiddleware, isAdmin } from "@/middleware/authMiddleware.js";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import z from "zod";
 import { uuidv7 } from "uuidv7";
@@ -14,47 +14,52 @@ import { getUserId, parseBody } from "@/lib/helpers.js";
 export const toiletsRouter = new Hono();
 toiletsRouter.use(authMiddleware, isAdmin);
 
-async function findToilet(id: string) {
-  const rows = await db
-    .select()
-    .from(toiletsTable)
-    .where(eq(toiletsTable.id, id))
-    .limit(1);
-  return rows[0] ?? null;
-}
-
 const addToiletSchema = z.object({
+  quantity: z.number().int().positive().default(1),
   type: z.enum(toiletTypeEnum.enumValues).default("portable"),
-  location: z.string().optional(),
 });
 
 const toiletActionSchema = z.object({
-  id: z.string(),
+  ids: z.array(z.string()).min(1),
 });
 
 toiletsRouter.get("/toilet-types", (c) => {
   return c.json({ types: toiletTypeEnum.enumValues });
 });
 
+toiletsRouter.get("/list", async (c) => {
+  const toilets = await db.select().from(toiletsTable);
+  return c.json({ toilets });
+});
+
+toiletsRouter.get("/list-maintenance", async (c) => {
+  const toilets = await db
+    .select()
+    .from(toiletsTable)
+    .where(eq(toiletsTable.status, "maintenance"));
+  return c.json({ toilets });
+});
+
 toiletsRouter.post("/add", async (c) => {
   const { data, errorResponse } = await parseBody(c, addToiletSchema);
   if (errorResponse) return errorResponse;
 
-  const { type, location } = data;
+  const { type, quantity } = data;
 
   await db.transaction(async (tx) => {
-    await tx.insert(toiletsTable).values({
-      id: uuidv7(),
-      type,
-      status: "available",
-      currentLocation: location,
+    const values = Array.from({ length: quantity }).map(() => {
+      return {
+        id: uuidv7(),
+        type,
+      } satisfies typeof toiletsTable.$inferInsert;
     });
 
+    await tx.insert(toiletsTable).values(values);
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       itemType: "toilet",
       action: "add",
-      quantity: 1,
+      quantity,
       performedBy: getUserId(c),
     });
   });
@@ -66,81 +71,100 @@ toiletsRouter.post("/remove", async (c) => {
   const { data, errorResponse } = await parseBody(c, toiletActionSchema);
   if (errorResponse) return errorResponse;
 
-  const { id } = data;
-  const toilet = await findToilet(id);
-  if (!toilet) return c.json({ error: "No such toilet exists" }, 400);
+  const { ids } = data;
+  const toilets = await db
+    .select()
+    .from(toiletsTable)
+    .where(inArray(toiletsTable.id, ids));
+
+  if (toilets.length !== ids.length)
+    return c.json({ error: "Some toilets do not exist" }, 400);
 
   await db.transaction(async (tx) => {
-    await tx.delete(toiletsTable).where(eq(toiletsTable.id, id));
+    await tx.delete(toiletsTable).where(inArray(toiletsTable.id, ids));
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       itemType: "toilet",
       action: "remove",
-      quantity: 1,
+      quantity: ids.length,
       performedBy: getUserId(c),
     });
   });
 
-  return c.json({ status: true, message: "Toilet removed successfully" });
+  return c.json({ status: true, message: "Toilets removed successfully" });
 });
 
 toiletsRouter.post("/damage", async (c) => {
   const { data, errorResponse } = await parseBody(c, toiletActionSchema);
   if (errorResponse) return errorResponse;
 
-  const { id } = data;
-  const toilet = await findToilet(id);
-  if (!toilet) return c.json({ error: "No such toilet exists" }, 400);
-  if (toilet.status === "damaged")
-    return c.json({ error: "Toilet is already marked as damaged" }, 400);
+  const { ids } = data;
+  const toilets = await db
+    .select()
+    .from(toiletsTable)
+    .where(inArray(toiletsTable.id, ids));
+
+  if (toilets.length !== ids.length)
+    return c.json({ error: "Some toilets do not exist" }, 400);
+
+  const damaged = toilets.filter((t) => t.status === "damaged");
+  if (damaged.length > 0)
+    return c.json({ error: "Some toilets are already marked as damaged" }, 400);
 
   await db.transaction(async (tx) => {
     await tx
       .update(toiletsTable)
       .set({ status: "damaged" })
-      .where(eq(toiletsTable.id, id));
+      .where(inArray(toiletsTable.id, ids));
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       itemType: "toilet",
       action: "damage",
-      quantity: 1,
+      quantity: ids.length,
       performedBy: getUserId(c),
     });
   });
 
-  return c.json({ status: true, message: "Toilet marked as damaged" });
+  return c.json({ status: true, message: "Toilets marked as damaged" });
 });
 
 toiletsRouter.post("/maintenance", async (c) => {
   const { data, errorResponse } = await parseBody(c, toiletActionSchema);
   if (errorResponse) return errorResponse;
 
-  const { id } = data;
-  const toilet = await findToilet(id);
-  if (!toilet) return c.json({ error: "No such toilet exists" }, 400);
-  if (toilet.status === "maintenance")
-    return c.json({ error: "Toilet is already under maintenance" }, 400);
+  const { ids } = data;
+  const toilets = await db
+    .select()
+    .from(toiletsTable)
+    .where(inArray(toiletsTable.id, ids));
+
+  if (toilets.length !== ids.length)
+    return c.json({ error: "Some toilets do not exist" }, 400);
+
+  const inMaintenance = toilets.filter((t) => t.status === "maintenance");
+  if (inMaintenance.length > 0)
+    return c.json({ error: "Some toilets are already under maintenance" }, 400);
 
   await db.transaction(async (tx) => {
     await tx
       .update(toiletsTable)
       .set({ status: "maintenance" })
-      .where(eq(toiletsTable.id, id));
+      .where(inArray(toiletsTable.id, ids));
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       itemType: "toilet",
       action: "maintenance",
-      quantity: 1,
+      quantity: ids.length,
       performedBy: getUserId(c),
     });
   });
 
   return c.json({
     status: true,
-    message: "Toilet marked as under maintenance",
+    message: "Toilets marked as under maintenance",
   });
 });
 
@@ -148,26 +172,33 @@ toiletsRouter.post("/restore", async (c) => {
   const { data, errorResponse } = await parseBody(c, toiletActionSchema);
   if (errorResponse) return errorResponse;
 
-  const { id } = data;
-  const toilet = await findToilet(id);
-  if (!toilet) return c.json({ error: "No such toilet exists" }, 400);
-  if (toilet.status !== "maintenance")
-    return c.json({ error: "Toilet is not under maintenance" }, 400);
+  const { ids } = data;
+  const toilets = await db
+    .select()
+    .from(toiletsTable)
+    .where(inArray(toiletsTable.id, ids));
+
+  if (toilets.length !== ids.length)
+    return c.json({ error: "Some toilets do not exist" }, 400);
+
+  const notMaintenance = toilets.filter((t) => t.status !== "maintenance");
+  if (notMaintenance.length > 0)
+    return c.json({ error: "Some toilets are not under maintenance" }, 400);
 
   await db.transaction(async (tx) => {
     await tx
       .update(toiletsTable)
       .set({ status: "available" })
-      .where(eq(toiletsTable.id, id));
+      .where(inArray(toiletsTable.id, ids));
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       itemType: "toilet",
       action: "restore",
-      quantity: 1,
+      quantity: ids.length,
       performedBy: getUserId(c),
     });
   });
 
-  return c.json({ status: true, message: "Toilet restored from maintenance" });
+  return c.json({ status: true, message: "Toilets restored from maintenance" });
 });

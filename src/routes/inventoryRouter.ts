@@ -6,7 +6,7 @@ import {
   usersTable,
 } from "@/db/schema.js";
 import { authMiddleware, isAdmin } from "@/middleware/authMiddleware.js";
-import { count, desc, eq, sum } from "drizzle-orm";
+import { count, desc, eq, sql, sum } from "drizzle-orm";
 import { Hono } from "hono";
 import { fencesRouter } from "./fencesRouter.js";
 import { toiletsRouter } from "./toiletsRouter.js";
@@ -30,9 +30,9 @@ inventoryRouter.get("/summary", async (c) => {
     db
       .select({
         total: count(toiletsTable.id),
-        damaged: count(eq(toiletsTable.status, "damaged")),
-        available: count(eq(toiletsTable.status, "available")),
-        maintenance: count(eq(toiletsTable.status, "maintenance")),
+        damaged: sql`sum(case when ${toiletsTable.status} = 'damaged' then 1 else 0 end)`,
+        available: sql`sum(case when ${toiletsTable.status} = 'available' then 1 else 0 end)`,
+        maintenance: sql`sum(case when ${toiletsTable.status} = 'maintenance' then 1 else 0 end)`,
       })
       .from(toiletsTable),
   ]);

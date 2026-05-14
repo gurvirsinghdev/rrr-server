@@ -71,9 +71,7 @@
         "fences_type_unique": {
           "name": "fences_type_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "type"
-          ]
+          "columns": ["type"]
         }
       },
       "policies": {},
@@ -149,12 +147,8 @@
           "name": "inventory_logs_performed_by_users_id_fk",
           "tableFrom": "inventory_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "performed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["performed_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -290,9 +284,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -304,10 +296,7 @@
     "public.fence_type_enum": {
       "name": "fence_type_enum",
       "schema": "public",
-      "values": [
-        "fence_4ft",
-        "fence_6ft"
-      ]
+      "values": ["fence_4ft", "fence_6ft"]
     },
     "public.inventory_action_enum": {
       "name": "inventory_action_enum",
@@ -325,35 +314,22 @@
     "public.inventory_item_enum": {
       "name": "inventory_item_enum",
       "schema": "public",
-      "values": [
-        "fence",
-        "toilet"
-      ]
+      "values": ["fence", "toilet"]
     },
     "public.toilet_status_enum": {
       "name": "toilet_status_enum",
       "schema": "public",
-      "values": [
-        "available",
-        "in_use",
-        "maintenance",
-        "damaged"
-      ]
+      "values": ["available", "in_use", "maintenance", "damaged"]
     },
     "public.toilet_type_enum": {
       "name": "toilet_type_enum",
       "schema": "public",
-      "values": [
-        "portable"
-      ]
+      "values": ["portable"]
     },
     "public.user_role_enum": {
       "name": "user_role_enum",
       "schema": "public",
-      "values": [
-        "admin",
-        "driver"
-      ]
+      "values": ["admin", "driver"]
     }
   },
   "schemas": {},
