@@ -1,19 +1,21 @@
 import { db } from "@/db/index.js";
 import {
   fencesTable,
-  fenceTypeEnum,
   inventoryLogsTable,
   toiletsTable,
   usersTable,
 } from "@/db/schema.js";
 import { authMiddleware, isAdmin } from "@/middleware/authMiddleware.js";
-import { count, desc, eq, sql, sum } from "drizzle-orm";
+import { count, desc, eq, sum } from "drizzle-orm";
 import { Hono } from "hono";
-import z from "zod";
-import { uuidv7 } from "uuidv7";
+import { fencesRouter } from "./fencesRouter.js";
+import { toiletsRouter } from "./toiletsRouter.js";
 
 export const inventoryRouter = new Hono();
 inventoryRouter.use(authMiddleware, isAdmin);
+
+inventoryRouter.route("/fence", fencesRouter);
+inventoryRouter.route("/toilets", toiletsRouter);
 
 inventoryRouter.get("/summary", async (c) => {
   const [fences, toilets] = await Promise.all([
@@ -49,121 +51,6 @@ inventoryRouter.get("/summary", async (c) => {
       maintanance: toilets[0]?.maintenance ?? 0,
     },
   });
-});
-
-const addFencesSchema = z.object({
-  type: z.enum(fenceTypeEnum.enumValues),
-  quantity: z.number().int().positive(),
-  userId: z.string(),
-});
-inventoryRouter.post("/fences/add", async (c) => {
-  const payload = await c.req.json();
-  const { success, data, error } = addFencesSchema.safeParse(payload);
-  if (!success) {
-    console.error(error);
-    return c.json({ error: "Invalid request data" }, 400);
-  }
-
-  const { quantity, type, userId } = data;
-
-  await db.transaction(async (tx) => {
-    const existing = await tx
-      .select()
-      .from(fencesTable)
-      .where(eq(fencesTable.type, type))
-      .limit(1);
-
-    if (existing.length === 0)
-      await tx
-        .insert(fencesTable)
-        .values({
-          id: uuidv7(),
-          type,
-          totalQuantity: quantity,
-          availableQuantity: quantity,
-          damagedQuantity: 0,
-        })
-        .onConflictDoUpdate({
-          target: fencesTable.type,
-          set: {
-            totalQuantity: sql`${fencesTable.totalQuantity} + ${quantity}`,
-            availableQuantity: sql`${fencesTable.availableQuantity} + ${quantity}`,
-          },
-        });
-    else {
-      const targetRow = existing[0];
-      await tx
-        .update(fencesTable)
-        .set({
-          totalQuantity: sql`${fencesTable.totalQuantity} + ${quantity}`,
-          availableQuantity: sql`${fencesTable.availableQuantity} + ${quantity}`,
-        })
-        .where(eq(fencesTable.id, targetRow.id));
-    }
-
-    await tx.insert(inventoryLogsTable).values({
-      id: uuidv7(),
-      itemType: "fence",
-      action: "add",
-      quantity,
-      performedBy: userId,
-    });
-  });
-
-  return c.json({ status: true, message: "Fences added successfully" });
-});
-
-const damageFencesSchema = z.object({
-  type: z.enum(fenceTypeEnum.enumValues),
-  quantity: z.number().int().positive(),
-  userId: z.string(),
-});
-inventoryRouter.post("/fences/damage", async (c) => {
-  const payload = await c.req.json();
-  const { success, data, error } = damageFencesSchema.safeParse(payload);
-  if (!success) {
-    console.error(error);
-    return c.json({ error: "Invalid request data" }, 400);
-  }
-
-  const { quantity, type, userId } = data;
-  const existing = await db
-    .select()
-    .from(fencesTable)
-    .where(eq(fencesTable.type, type))
-    .limit(1);
-
-  if (existing.length === 0) {
-    return c.json({ error: "No such fence type exists" }, 400);
-  }
-
-  const targetRow = existing[0];
-  if (targetRow.availableQuantity < quantity) {
-    return c.json(
-      { error: "Not enough available fences to mark as damaged" },
-      400,
-    );
-  }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .update(fencesTable)
-      .set({
-        availableQuantity: sql`${fencesTable.availableQuantity} - ${quantity}`,
-        damagedQuantity: sql`${fencesTable.damagedQuantity} + ${quantity}`,
-      })
-      .where(eq(fencesTable.id, targetRow.id));
-
-    await tx.insert(inventoryLogsTable).values({
-      id: uuidv7(),
-      itemType: "fence",
-      action: "damage",
-      quantity,
-      performedBy: userId,
-    });
-  });
-
-  return c.json({ status: true, message: "Fences marked as damaged" });
 });
 
 inventoryRouter.get("/logs", async (c) => {

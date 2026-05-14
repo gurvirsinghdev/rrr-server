@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 
 import { db } from "@/db/index.js";
 import { usersTable } from "@/db/schema.js";
+import type { UserJWTPayload } from "@/types.js";
 
 export const authRouter = new Hono();
 

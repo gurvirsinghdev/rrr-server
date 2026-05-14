@@ -36,6 +36,27 @@
       "when": 1778744571436,
       "tag": "0004_demonic_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778790268629,
+      "tag": "0005_redundant_thunderbolt_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778790479035,
+      "tag": "0006_mean_lady_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778794037926,
+      "tag": "0007_gigantic_doctor_doom",
+      "breakpoints": true
     }
   ]
 }

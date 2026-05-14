@@ -6,7 +6,6 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-
 export const userRoleEmum = pgEnum("user_role_enum", ["admin", "driver"]);
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey().notNull(),
@@ -16,11 +15,9 @@ export const usersTable = pgTable("users", {
   lastName: text("last_name"),
   role: userRoleEmum("role").notNull().default("driver"),
   isActive: boolean("is_active").default(true),
-
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
 export const fenceTypeEnum = pgEnum("fence_type_enum", [
   "fence_4ft",
   "fence_6ft",
@@ -32,11 +29,9 @@ export const fencesTable = pgTable("fences", {
   availableQuantity: integer("available_quantity").notNull().default(0),
   damagedQuantity: integer("damaged_quantity").notNull().default(0),
   maintenanceQuantity: integer("maintenance_quantity").notNull().default(0),
-
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
-
 export const toiletTypeEnum = pgEnum("toilet_type_enum", ["portable"]);
 export const toiletStatusEnum = pgEnum("toilet_status_enum", [
   "available",
@@ -49,11 +44,9 @@ export const toiletsTable = pgTable("toilets", {
   type: toiletTypeEnum("type").notNull(),
   status: toiletStatusEnum("status").default("available"),
   currentLocation: text("current_location"),
-
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
-
 export const inventoryItemEnum = pgEnum("inventory_item_enum", [
   "fence",
   "toilet",
@@ -77,7 +70,6 @@ export const inventoryLogsTable = pgTable("inventory_logs", {
     .notNull()
     .references(() => usersTable.id),
   note: text("note"),
-
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
