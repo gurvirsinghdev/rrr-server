@@ -12,6 +12,7 @@ CREATE TABLE "assets" (
 	"current_job_id" text,
 	"last_service_at" timestamp,
 	"metadata" jsonb,
+	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );

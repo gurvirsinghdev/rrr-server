@@ -56,6 +56,7 @@ export const assetsTable = pgTable("assets", {
   currentJobId: text("current_job_id"),
   lastServiceAt: timestamp("last_service_at"),
   metadata: jsonb("metadata"),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

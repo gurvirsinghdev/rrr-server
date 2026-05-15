@@ -1,6 +1,6 @@
 import { db } from "@/db/index.js";
 import { assetsTable, inventoryLogsTable, productsTable } from "@/db/schema.js";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import z from "zod";
 import { uuidv7 } from "uuidv7";
@@ -49,14 +49,19 @@ assetsRouter.post("/create", async (c) => {
 
 assetsRouter.get("/", async (c) => {
   const status = c.req.query("status");
-  const query = db.select().from(assetsTable);
+  const notDeleted = eq(assetsTable.isDeleted, false);
   if (status) {
     return c.json({
-      assets: await query.where(eq(assetsTable.status, status as any)),
+      assets: await db
+        .select()
+        .from(assetsTable)
+        .where(and(notDeleted, eq(assetsTable.status, status as any))),
     });
   }
 
-  return c.json({ assets: await query });
+  return c.json({
+    assets: await db.select().from(assetsTable).where(notDeleted),
+  });
 });
 
 const updateStatusSchema = z.object({
@@ -142,7 +147,10 @@ assetsRouter.post("/remove", async (c) => {
   }
 
   await db.transaction(async (tx) => {
-    await tx.delete(assetsTable).where(inArray(assetsTable.id, ids));
+    await tx
+      .update(assetsTable)
+      .set({ isDeleted: true })
+      .where(inArray(assetsTable.id, ids));
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),

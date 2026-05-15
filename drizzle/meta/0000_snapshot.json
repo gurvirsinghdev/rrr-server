@@ -1,5 +1,5 @@
 {
-  "id": "890827a5-e161-4aac-9a45-54c503fff8e5",
+  "id": "ed5d0b1e-53c3-4358-96e9-7a3281c627e9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -57,6 +57,13 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
