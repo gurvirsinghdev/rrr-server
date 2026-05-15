@@ -17,7 +17,13 @@ import { uuidv7 } from "uuidv7";
 import z from "zod";
 import { getUserId, parseBody } from "@/lib/helpers.js";
 
-export const jobsRouter = new Hono();
+type AppEnv = {
+  Variables: {
+    user: UserJWTPayload;
+  };
+};
+
+export const jobsRouter = new Hono<AppEnv>();
 jobsRouter.use(authMiddleware);
 
 const jobBaseQuery = () =>
@@ -45,7 +51,7 @@ const jobBaseQuery = () =>
 
 // GET /jobs
 jobsRouter.get("/", async (c) => {
-  const user = c.get("user") as UserJWTPayload;
+  const user = c.get("user");
 
   if (user.role === "driver") {
     const jobs = await jobBaseQuery().where(
@@ -61,7 +67,7 @@ jobsRouter.get("/", async (c) => {
 // GET /jobs/:jobId
 jobsRouter.get("/:jobId", async (c) => {
   const { jobId } = c.req.param();
-  const user = c.get("user") as UserJWTPayload;
+  const user = c.get("user");
 
   const [job] = await jobBaseQuery()
     .where(eq(jobsTable.id, jobId))
@@ -76,10 +82,73 @@ jobsRouter.get("/:jobId", async (c) => {
   return c.json({ job });
 });
 
+// POST /jobs - Create new job (admin only)
+const createJobSchema = z.object({
+  customerId: z.string().uuid("Valid customerId is required"),
+  jobSiteId: z.string().uuid("Valid jobSiteId is required"),
+  scheduledDate: z.string().transform((s) => new Date(s)),
+  notes: z.string().optional(),
+  assignedDriverId: z.string().uuid().optional().nullable(),
+});
+
+jobsRouter.post("/", isAdmin, async (c) => {
+  const { data, errorResponse } = await parseBody(c, createJobSchema);
+  if (errorResponse) return errorResponse;
+
+  // Verify customer exists
+  const [customer] = await db
+    .select({ id: customersTable.id })
+    .from(customersTable)
+    .where(eq(customersTable.id, data.customerId))
+    .limit(1);
+
+  if (!customer) {
+    return c.json({ error: "Customer not found" }, 400);
+  }
+
+  // Verify job site exists
+  const [jobSite] = await db
+    .select({ id: jobSitesTable.id })
+    .from(jobSitesTable)
+    .where(eq(jobSitesTable.id, data.jobSiteId))
+    .limit(1);
+
+  if (!jobSite) {
+    return c.json({ error: "Job site not found" }, 400);
+  }
+
+  // Verify driver exists if provided
+  if (data.assignedDriverId) {
+    const [driver] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.id, data.assignedDriverId))
+      .limit(1);
+
+    if (!driver) {
+      return c.json({ error: "Driver not found" }, 400);
+    }
+  }
+
+  const job = {
+    id: uuidv7(),
+    customerId: data.customerId,
+    jobSiteId: data.jobSiteId,
+    scheduledDate: data.scheduledDate,
+    status: "pending" as const,
+    assignedDriverId: data.assignedDriverId ?? null,
+    notes: data.notes ?? null,
+  };
+
+  await db.insert(jobsTable).values(job);
+
+  return c.json({ job }, 201);
+});
+
 // GET /jobs/:jobId/assets
 jobsRouter.get("/:jobId/assets", async (c) => {
   const { jobId } = c.req.param();
-  const user = c.get("user") as UserJWTPayload;
+  const user = c.get("user");
 
   if (user.role === "driver") {
     const [job] = await db
