@@ -12,7 +12,6 @@ summaryRouter.get("/", async (c) => {
       available: sql`sum(case when status = 'available' then 1 else 0 end)`,
       damaged: sql`sum(case when status = 'damaged' then 1 else 0 end)`,
       maintenance: sql`sum(case when status = 'maintenance' then 1 else 0 end)`,
-      inUse: sql`sum(case when status = 'in_use' then 1 else 0 end)`,
     })
     .from(assetsTable);
 

@@ -1,5 +1,5 @@
 import { db } from "@/db/index.js";
-import { assetsTable, inventoryLogsTable } from "@/db/schema.js";
+import { assetsTable, inventoryLogsTable, productsTable } from "@/db/schema.js";
 import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import z from "zod";
@@ -9,7 +9,7 @@ import { getUserId, parseBody } from "@/lib/helpers.js";
 export const assetsRouter = new Hono();
 
 const createAssetsSchema = z.object({
-  productVariantId: z.string(),
+  productId: z.string(),
   quantity: z.number().int().positive(),
 });
 
@@ -17,12 +17,20 @@ assetsRouter.post("/create", async (c) => {
   const { data, errorResponse } = await parseBody(c, createAssetsSchema);
   if (errorResponse) return errorResponse;
 
-  const { productVariantId, quantity } = data;
+  const { productId, quantity } = data;
+
+  const [product] = await db
+    .select({ name: productsTable.name })
+    .from(productsTable)
+    .where(eq(productsTable.id, productId))
+    .limit(1);
+
+  const productName = product?.name ?? "Unknown Product";
 
   await db.transaction(async (tx) => {
     const values = Array.from({ length: quantity }).map(() => ({
       id: uuidv7(),
-      productVariantId,
+      productId,
     }));
 
     await tx.insert(assetsTable).values(values);
@@ -32,7 +40,7 @@ assetsRouter.post("/create", async (c) => {
       assetId: values[0].id,
       action: "created",
       performedBy: getUserId(c),
-      note: `Created ${quantity} assets`,
+      note: `Created ${quantity} × ${productName}`,
     });
   });
 
@@ -53,7 +61,7 @@ assetsRouter.get("/", async (c) => {
 
 const updateStatusSchema = z.object({
   ids: z.array(z.string()),
-  status: z.enum(["available", "maintenance", "damaged", "in_use"]),
+  status: z.enum(["available", "maintenance", "damaged"]),
 });
 
 assetsRouter.post("/status", async (c) => {
@@ -61,6 +69,34 @@ assetsRouter.post("/status", async (c) => {
   if (errorResponse) return errorResponse;
 
   const { ids, status } = data;
+
+  const [asset] = await db
+    .select({ productId: assetsTable.productId })
+    .from(assetsTable)
+    .where(eq(assetsTable.id, ids[0]))
+    .limit(1);
+
+  let productName = "Unknown Product";
+  if (asset) {
+    const [product] = await db
+      .select({ name: productsTable.name })
+      .from(productsTable)
+      .where(eq(productsTable.id, asset.productId))
+      .limit(1);
+    productName = product?.name ?? productName;
+  }
+
+  const noteMap: Record<string, string> = {
+    damaged:     `Marked ${ids.length} × ${productName} as damaged`,
+    maintenance: `Sent ${ids.length} × ${productName} to maintenance`,
+    available:   `Restored ${ids.length} × ${productName} to available`,
+  };
+
+  const actionMap: Record<string, "damage" | "maintenance" | "status_change"> = {
+    damaged:     "damage",
+    maintenance: "maintenance",
+    available:   "status_change",
+  };
 
   await db.transaction(async (tx) => {
     await tx
@@ -71,9 +107,9 @@ assetsRouter.post("/status", async (c) => {
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       assetId: ids[0],
-      action: "status_change",
+      action: actionMap[status] ?? "status_change",
       performedBy: getUserId(c),
-      note: `Updated ${ids.length} assets to ${status}`,
+      note: noteMap[status] ?? `Updated ${ids.length} × ${productName}`,
     });
   });
 
@@ -89,6 +125,22 @@ assetsRouter.post("/remove", async (c) => {
 
   const { ids } = data;
 
+  const [asset] = await db
+    .select({ productId: assetsTable.productId })
+    .from(assetsTable)
+    .where(eq(assetsTable.id, ids[0]))
+    .limit(1);
+
+  let productName = "Unknown Product";
+  if (asset) {
+    const [product] = await db
+      .select({ name: productsTable.name })
+      .from(productsTable)
+      .where(eq(productsTable.id, asset.productId))
+      .limit(1);
+    productName = product?.name ?? productName;
+  }
+
   await db.transaction(async (tx) => {
     await tx.delete(assetsTable).where(inArray(assetsTable.id, ids));
 
@@ -97,7 +149,7 @@ assetsRouter.post("/remove", async (c) => {
       assetId: ids[0],
       action: "status_change",
       performedBy: getUserId(c),
-      note: `Removed ${ids.length} assets`,
+      note: `Removed ${ids.length} × ${productName}`,
     });
   });
 

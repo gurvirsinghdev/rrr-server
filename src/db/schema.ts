@@ -24,18 +24,8 @@ export const usersTable = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const productTypeTable = pgTable("product_types", {
+export const productsTable = pgTable("products", {
   id: text("id").primaryKey().notNull(),
-  name: text("name").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const productVariantTable = pgTable("product_variants", {
-  id: text("id").primaryKey().notNull(),
-  productTypeId: text("product_type_id")
-    .notNull()
-    .references(() => productTypeTable.id),
-
   name: text("name").notNull(),
   sku: text("sku"),
   metadata: jsonb("metadata"),
@@ -56,9 +46,9 @@ export const assetStatusEnum = pgEnum("asset_status_enum", [
 export const assetsTable = pgTable("assets", {
   id: text("id").primaryKey().notNull(),
 
-  productVariantId: text("product_variant_id")
+  productId: text("product_id")
     .notNull()
-    .references(() => productVariantTable.id),
+    .references(() => productsTable.id),
 
   label: text("label"),
   serialNumber: text("serial_number"),
@@ -125,9 +115,9 @@ export const jobItemsTable = pgTable("job_items", {
   jobId: text("job_id")
     .notNull()
     .references(() => jobsTable.id),
-  productVariantId: text("product_variant_id")
+  productId: text("product_id")
     .notNull()
-    .references(() => productVariantTable.id),
+    .references(() => productsTable.id),
   quantity: integer("quantity").notNull(),
   notes: text("notes"),
 
