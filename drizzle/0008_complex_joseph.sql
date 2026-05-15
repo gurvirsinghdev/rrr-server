@@ -1,1 +1,0 @@
-ALTER TABLE "toilets" ADD COLUMN "sno" serial NOT NULL;

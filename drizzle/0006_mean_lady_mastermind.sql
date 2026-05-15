@@ -1,1 +1,0 @@
-ALTER TYPE "public"."inventory_action_enum" ADD VALUE 'restore';

@@ -5,64 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1778703615063,
-      "tag": "0000_nasty_rattler",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1778742140806,
-      "tag": "0001_classy_betty_ross",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1778742198192,
-      "tag": "0002_amused_excalibur",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1778742719106,
-      "tag": "0003_dusty_smiling_tiger",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1778744571436,
-      "tag": "0004_demonic_proudstar",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1778790268629,
-      "tag": "0005_redundant_thunderbolt_ross",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1778790479035,
-      "tag": "0006_mean_lady_mastermind",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1778794037926,
-      "tag": "0007_gigantic_doctor_doom",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1778797601507,
-      "tag": "0008_complex_joseph",
+      "when": 1778811918033,
+      "tag": "0000_small_wendell_vaughn",
       "breakpoints": true
     }
   ]
