@@ -13,6 +13,7 @@ logsRouter.get("/", async (c) => {
       id: inventoryLogsTable.id,
       action: inventoryLogsTable.action,
       note: inventoryLogsTable.note,
+      metadata: inventoryLogsTable.metadata,
       createdAt: inventoryLogsTable.createdAt,
       performedByFirstName: usersTable.firstName,
       performedByLastName: usersTable.lastName,

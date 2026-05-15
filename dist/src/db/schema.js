@@ -158,5 +158,6 @@ export const inventoryLogsTable = pgTable("inventory_logs", {
     action: inventoryActionEnum("action").notNull(),
     performedBy: text("performed_by").references(() => usersTable.id),
     note: text("note"),
+    metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow(),
 });

@@ -53,14 +53,18 @@ const jobBaseQuery = () =>
 jobsRouter.get("/", async (c) => {
   const user = c.get("user");
 
+  console.log("GET /jobs - User role:", user.role, "User ID:", user.userId);
+
   if (user.role === "driver") {
     const jobs = await jobBaseQuery().where(
       eq(jobsTable.assignedDriverId, user.userId),
     );
+    console.log("Driver jobs returned:", jobs.length);
     return c.json({ jobs });
   }
 
   const jobs = await jobBaseQuery();
+  console.log("Admin jobs returned:", jobs.length);
   return c.json({ jobs });
 });
 
@@ -228,12 +232,35 @@ jobsRouter.post("/:jobId/assign-assets", isAdmin, async (c) => {
       .set({ status: "in_use", currentJobId: jobId })
       .where(inArray(assetsTable.id, assetIds));
 
+    const [firstAsset] = await tx
+      .select({ productId: assetsTable.productId })
+      .from(assetsTable)
+      .where(eq(assetsTable.id, assetIds[0]))
+      .limit(1);
+
+    let productName = "Unknown Product";
+    if (firstAsset) {
+      const [product] = await tx
+        .select({ name: productsTable.name })
+        .from(productsTable)
+        .where(eq(productsTable.id, firstAsset.productId))
+        .limit(1);
+      productName = product?.name ?? "Unknown Product";
+    }
+
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       assetId: assetIds[0],
       action: "assigned",
       performedBy: getUserId(c),
-      note: `Assigned ${assetIds.length} asset(s) to job`,
+      note: `Assigned ${assetIds.length} ${productName}${assetIds.length > 1 ? "s" : ""} to job`,
+      metadata: {
+        assetIds,
+        productId: firstAsset?.productId,
+        productName,
+        quantity: assetIds.length,
+        jobId,
+      },
     });
   });
 
@@ -283,12 +310,35 @@ jobsRouter.post("/:jobId/return-assets", isAdmin, async (c) => {
       .set({ status: "available", currentJobId: null })
       .where(inArray(assetsTable.id, assetIds));
 
+    const [firstAsset] = await tx
+      .select({ productId: assetsTable.productId })
+      .from(assetsTable)
+      .where(eq(assetsTable.id, assetIds[0]))
+      .limit(1);
+
+    let productName = "Unknown Product";
+    if (firstAsset) {
+      const [product] = await tx
+        .select({ name: productsTable.name })
+        .from(productsTable)
+        .where(eq(productsTable.id, firstAsset.productId))
+        .limit(1);
+      productName = product?.name ?? "Unknown Product";
+    }
+
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       assetId: assetIds[0],
       action: "returned",
       performedBy: getUserId(c),
-      note: `Returned ${assetIds.length} asset(s) from job`,
+      note: `Returned ${assetIds.length} ${productName}${assetIds.length > 1 ? "s" : ""} from job`,
+      metadata: {
+        assetIds,
+        productId: firstAsset?.productId,
+        productName,
+        quantity: assetIds.length,
+        jobId,
+      },
     });
   });
 
@@ -347,12 +397,36 @@ jobsRouter.patch("/:jobId/status", isAdmin, async (c) => {
           .set({ status: "available", currentJobId: null })
           .where(inArray(assetsTable.id, ids));
 
+        const [firstAsset] = await tx
+          .select({ productId: assetsTable.productId })
+          .from(assetsTable)
+          .where(eq(assetsTable.id, ids[0]))
+          .limit(1);
+
+        let productName = "Unknown Product";
+        if (firstAsset) {
+          const [product] = await tx
+            .select({ name: productsTable.name })
+            .from(productsTable)
+            .where(eq(productsTable.id, firstAsset.productId))
+            .limit(1);
+          productName = product?.name ?? "Unknown Product";
+        }
+
         await tx.insert(inventoryLogsTable).values({
           id: uuidv7(),
           assetId: ids[0],
           action: "returned",
           performedBy: getUserId(c),
-          note: `Auto-returned ${ids.length} asset(s) — job marked ${status}`,
+          note: `Auto-returned ${ids.length} ${productName}${ids.length > 1 ? "s" : ""} — job ${status}`,
+          metadata: {
+            assetIds: ids,
+            productId: firstAsset?.productId,
+            productName,
+            quantity: ids.length,
+            jobId,
+            autoAction: true,
+          },
         });
       }
     }

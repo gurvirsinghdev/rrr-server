@@ -40,7 +40,13 @@ assetsRouter.post("/create", async (c) => {
       assetId: values[0].id,
       action: "created",
       performedBy: getUserId(c),
-      note: `Created ${quantity} × ${productName}`,
+      note: `Created ${quantity} ${productName}${quantity > 1 ? "s" : ""}`,
+      metadata: {
+        assetIds: values.map((v) => v.id),
+        productId,
+        productName,
+        quantity,
+      },
     });
   });
 
@@ -92,9 +98,9 @@ assetsRouter.post("/status", async (c) => {
   }
 
   const noteMap: Record<string, string> = {
-    damaged:     `Marked ${ids.length} × ${productName} as damaged`,
-    maintenance: `Sent ${ids.length} × ${productName} to maintenance`,
-    available:   `Restored ${ids.length} × ${productName} to available`,
+    damaged:     `Marked ${ids.length} ${productName}${ids.length > 1 ? "s" : ""} as damaged`,
+    maintenance: `Sent ${ids.length} ${productName}${ids.length > 1 ? "s" : ""} to maintenance`,
+    available:   `Restored ${ids.length} ${productName}${ids.length > 1 ? "s" : ""} to available`,
   };
 
   const actionMap: Record<string, "damage" | "maintenance" | "status_change"> = {
@@ -114,7 +120,15 @@ assetsRouter.post("/status", async (c) => {
       assetId: ids[0],
       action: actionMap[status] ?? "status_change",
       performedBy: getUserId(c),
-      note: noteMap[status] ?? `Updated ${ids.length} × ${productName}`,
+      note: noteMap[status] ?? `Updated ${ids.length} ${productName}${ids.length > 1 ? "s" : ""}`,
+      metadata: {
+        assetIds: ids,
+        productId: asset?.productId,
+        productName,
+        quantity: ids.length,
+        previousStatus: "unknown",
+        newStatus: status,
+      },
     });
   });
 
@@ -157,7 +171,13 @@ assetsRouter.post("/remove", async (c) => {
       assetId: ids[0],
       action: "status_change",
       performedBy: getUserId(c),
-      note: `Removed ${ids.length} × ${productName}`,
+      note: `Removed ${ids.length} ${productName}${ids.length > 1 ? "s" : ""}`,
+      metadata: {
+        assetIds: ids,
+        productId: asset?.productId,
+        productName,
+        quantity: ids.length,
+      },
     });
   });
 
