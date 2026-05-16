@@ -24,3 +24,10 @@ export const isAdmin = async (c: Context, next: Next) => {
     return c.json({ error: "Admin access required" }, 403);
   await next();
 };
+
+export const isDriver = async (c: Context, next: Next) => {
+  const user = c.get("user") as undefined | UserJWTPayload;
+  if (!(user?.role === "driver"))
+    return c.json({ error: "Driver access required" }, 403);
+  await next();
+};

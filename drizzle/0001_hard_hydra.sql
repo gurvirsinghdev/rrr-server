@@ -1,1 +1,0 @@
-ALTER TABLE "inventory_logs" ADD COLUMN "metadata" jsonb;

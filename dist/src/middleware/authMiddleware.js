@@ -20,3 +20,9 @@ export const isAdmin = async (c, next) => {
         return c.json({ error: "Admin access required" }, 403);
     await next();
 };
+export const isDriver = async (c, next) => {
+    const user = c.get("user");
+    if (!(user?.role === "driver"))
+        return c.json({ error: "Driver access required" }, 403);
+    await next();
+};

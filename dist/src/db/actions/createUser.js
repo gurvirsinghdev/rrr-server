@@ -14,5 +14,6 @@ export default async function createUser(data) {
         role: data.role,
         firstName: data.firstName,
         lastName: data.lastName,
+        certifications: data.certifications ?? null,
     });
 }

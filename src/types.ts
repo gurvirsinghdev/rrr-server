@@ -3,7 +3,7 @@ import type { Context } from "hono";
 
 export type UserData = typeof usersTable.$inferInsert;
 export type CreateUserInput = Omit<UserData, "id" | "passwordHash"> & {
-  password: UserData["passwordHash"];
+  password: string;
 };
 
 export type UserJWTPayload = {

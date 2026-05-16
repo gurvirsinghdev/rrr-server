@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp, } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgEnum, pgTable, real, text, timestamp, } from "drizzle-orm/pg-core";
 export const userRoleEnum = pgEnum("user_role_enum", ["admin", "driver"]);
 export const usersTable = pgTable("users", {
     id: text("id").primaryKey().notNull(),
@@ -8,6 +8,7 @@ export const usersTable = pgTable("users", {
     lastName: text("last_name"),
     role: userRoleEnum("role").notNull().default("driver"),
     isActive: boolean("is_active").default(true),
+    certifications: jsonb("certifications"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -49,7 +50,7 @@ export const customersTable = pgTable("customers", {
     email: text("email"),
     createdAt: timestamp("created_at").defaultNow(),
 });
-export const jobSitesTable = pgTable("job_sites", {
+export const locationsTable = pgTable("locations", {
     id: text("id").primaryKey().notNull(),
     customerId: text("customer_id")
         .notNull()
@@ -59,10 +60,12 @@ export const jobSitesTable = pgTable("job_sites", {
     contactName: text("contact_name"),
     contactPhone: text("contact_phone"),
     notes: text("notes"),
+    lat: real("lat"),
+    lng: real("lng"),
     createdAt: timestamp("created_at").defaultNow(),
 });
 export const jobStatusEnum = pgEnum("job_status_enum", [
-    "pending",
+    "scheduled",
     "assigned",
     "in_progress",
     "completed",
@@ -74,15 +77,30 @@ export const jobsTable = pgTable("jobs", {
     customerId: text("customer_id")
         .notNull()
         .references(() => customersTable.id),
-    jobSiteId: text("job_site_id")
+    locationId: text("location_id")
         .notNull()
-        .references(() => jobSitesTable.id),
+        .references(() => locationsTable.id),
     scheduledDate: timestamp("scheduled_date").notNull(),
-    status: jobStatusEnum("status").default("pending"),
-    assignedDriverId: text("assigned_driver_id").references(() => usersTable.id),
+    status: jobStatusEnum("status").default("scheduled"),
     notes: text("notes"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
+});
+export const jobEventTypeEnum = pgEnum("job_event_type_enum", [
+    "started",
+    "completed",
+    "failed",
+    "note_added",
+]);
+export const jobEventsTable = pgTable("job_events", {
+    id: text("id").primaryKey().notNull(),
+    jobId: text("job_id")
+        .notNull()
+        .references(() => jobsTable.id),
+    type: jobEventTypeEnum("type").notNull(),
+    notes: text("notes"),
+    performedBy: text("performed_by").references(() => usersTable.id),
+    createdAt: timestamp("created_at").defaultNow(),
 });
 export const jobItemsTable = pgTable("job_items", {
     id: text("id").primaryKey().notNull(),
@@ -111,12 +129,33 @@ export const jobSchedulesTable = pgTable("job_schedules", {
     customerId: text("customer_id")
         .notNull()
         .references(() => customersTable.id),
-    jobSiteId: text("job_site_id")
+    locationId: text("location_id")
         .notNull()
-        .references(() => jobSitesTable.id),
-    recurrenceRule: text("recurrence_rule").notNull(), // cron or custom
+        .references(() => locationsTable.id),
+    recurrenceRule: text("recurrence_rule").notNull(),
     nextRunAt: timestamp("next_run_at"),
     isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+});
+export const routesTable = pgTable("routes", {
+    id: text("id").primaryKey().notNull(),
+    date: timestamp("date").notNull(),
+    driverId: text("driver_id")
+        .notNull()
+        .references(() => usersTable.id),
+    status: text("status").default("active"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+});
+export const routeJobsTable = pgTable("route_jobs", {
+    id: text("id").primaryKey().notNull(),
+    routeId: text("route_id")
+        .notNull()
+        .references(() => routesTable.id),
+    jobId: text("job_id")
+        .notNull()
+        .references(() => jobsTable.id),
+    order: integer("order").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow(),
 });
 export const driverShiftsTable = pgTable("driver_shifts", {
@@ -140,6 +179,36 @@ export const jobPhotosTable = pgTable("job_photos", {
         .references(() => jobsTable.id),
     url: text("url").notNull(),
     type: jobPhotoTypeEnum("type"),
+    createdAt: timestamp("created_at").defaultNow(),
+});
+export const invoiceStatusEnum = pgEnum("invoice_status_enum", [
+    "draft",
+    "sent",
+    "paid",
+    "void",
+]);
+export const invoicesTable = pgTable("invoices", {
+    id: text("id").primaryKey().notNull(),
+    customerId: text("customer_id")
+        .notNull()
+        .references(() => customersTable.id),
+    invoiceNumber: text("invoice_number").notNull().unique(),
+    status: invoiceStatusEnum("status").default("draft"),
+    subtotal: integer("subtotal").notNull().default(0),
+    total: integer("total").notNull().default(0),
+    issuedAt: timestamp("issued_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow(),
+});
+export const invoiceItemsTable = pgTable("invoice_items", {
+    id: text("id").primaryKey().notNull(),
+    invoiceId: text("invoice_id").references(() => invoicesTable.id),
+    jobId: text("job_id")
+        .notNull()
+        .references(() => jobsTable.id),
+    description: text("description").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    unitPrice: integer("unit_price").notNull(),
+    total: integer("total").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
 });
 export const inventoryActionEnum = pgEnum("inventory_action_enum", [
