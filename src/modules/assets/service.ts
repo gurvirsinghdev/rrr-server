@@ -103,39 +103,6 @@ export async function updateAssetStatus(
   return { updated: ids.length };
 }
 
-export async function removeAssets(ids: string[], userId: string) {
-  await db.transaction(async (tx) => {
-    const assetsWithProducts = await tx
-      .select({
-        assetId: assetsTable.id,
-        productId: assetsTable.productId,
-        productName: productsTable.name,
-      })
-      .from(assetsTable)
-      .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
-      .where(inArray(assetsTable.id, ids));
-
-    const productName = assetsWithProducts[0]?.productName ?? "Unknown Item";
-    const productId = assetsWithProducts[0]?.productId ?? null;
-    const note = `Removed ${ids.length} x ${productName}`;
-
-    await tx
-      .update(assetsTable)
-      .set({ isDeleted: true })
-      .where(inArray(assetsTable.id, ids));
-
-    await tx.insert(inventoryLogsTable).values({
-      id: uuidv7(),
-      productId,
-      action: "retired",
-      performedBy: userId,
-      note,
-      metadata: { assetIds: ids, quantity: ids.length },
-    });
-  });
-
-  return { removed: ids.length };
-}
 
 export async function getAssetHistory(assetId: string) {
   const logs = await db

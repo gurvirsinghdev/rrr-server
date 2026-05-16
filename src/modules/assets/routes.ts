@@ -1,10 +1,9 @@
 import { Hono } from "hono";
-import { createAssetSchema, updateAssetStatusSchema, removeAssetsSchema } from "./validation.js";
+import { createAssetSchema, updateAssetStatusSchema } from "./validation.js";
 import {
   createAssets,
   listAssets,
   updateAssetStatus,
-  removeAssets,
   getAssetHistory,
 } from "./service.js";
 import { authMiddleware, isAdmin } from "@/middleware/authMiddleware.js";
@@ -45,11 +44,4 @@ assetsRouter.post("/status", isAdmin, async (c) => {
   return c.json(result);
 });
 
-// POST /assets/remove
-assetsRouter.post("/remove", isAdmin, async (c) => {
-  const { data, errorResponse } = await parseBody(c, removeAssetsSchema);
-  if (errorResponse) return errorResponse;
 
-  const result = await removeAssets(data.ids, getUserId(c));
-  return c.json(result);
-});
