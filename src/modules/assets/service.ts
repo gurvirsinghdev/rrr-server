@@ -12,7 +12,11 @@ import {
   usersTable,
 } from "@/db/schema.js";
 
-export async function createAssets(productId: string, quantity: number, userId: string) {
+export async function createAssets(
+  productId: string,
+  quantity: number,
+  userId: string,
+) {
   return await db.transaction(async (tx) => {
     const [product] = await tx
       .select({ name: productsTable.name })
@@ -30,7 +34,7 @@ export async function createAssets(productId: string, quantity: number, userId: 
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
-      assetId: values[0].id,
+      productId,
       action: "created",
       performedBy: userId,
       note: `Created ${quantity} x ${productName}`,
@@ -59,30 +63,27 @@ export async function updateAssetStatus(
   status: string,
   userId: string,
 ) {
-  const actionMap: Record<string, "damage" | "maintenance" | "status_change"> = {
-    damaged: "damage",
+  const actionMap: Record<string, string> = {
+    damaged: "damaged",
     maintenance: "maintenance",
-    available: "status_change",
+    restored: "restored",
+    retired: "retired",
   };
 
   await db.transaction(async (tx) => {
     const assetsWithProducts = await tx
       .select({
         assetId: assetsTable.id,
+        productId: assetsTable.productId,
         productName: productsTable.name,
       })
       .from(assetsTable)
       .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
       .where(inArray(assetsTable.id, ids));
 
-    const productCounts = new Map<string, number>();
-    for (const a of assetsWithProducts) {
-      productCounts.set(a.productName, (productCounts.get(a.productName) ?? 0) + 1);
-    }
-    const productParts = [...productCounts.entries()]
-      .map(([name, count]) => `${count} x ${name}`)
-      .join(", ");
-    const note = `Updated ${productParts} to ${status}`;
+    const productName = assetsWithProducts[0]?.productName ?? "Unknown Item";
+    const productId = assetsWithProducts[0]?.productId ?? null;
+    const note = `Updated ${ids.length} x ${productName} to ${status}`;
 
     await tx
       .update(assetsTable)
@@ -91,8 +92,8 @@ export async function updateAssetStatus(
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
-      assetId: ids[0],
-      action: actionMap[status] ?? "status_change",
+      productId,
+      action: actionMap[status],
       performedBy: userId,
       note,
       metadata: { assetIds: ids, newStatus: status, quantity: ids.length },
@@ -107,20 +108,16 @@ export async function removeAssets(ids: string[], userId: string) {
     const assetsWithProducts = await tx
       .select({
         assetId: assetsTable.id,
+        productId: assetsTable.productId,
         productName: productsTable.name,
       })
       .from(assetsTable)
       .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
       .where(inArray(assetsTable.id, ids));
 
-    const productCounts = new Map<string, number>();
-    for (const a of assetsWithProducts) {
-      productCounts.set(a.productName, (productCounts.get(a.productName) ?? 0) + 1);
-    }
-    const productParts = [...productCounts.entries()]
-      .map(([name, count]) => `${count} x ${name}`)
-      .join(", ");
-    const note = `Removed ${productParts}`;
+    const productName = assetsWithProducts[0]?.productName ?? "Unknown Item";
+    const productId = assetsWithProducts[0]?.productId ?? null;
+    const note = `Removed ${ids.length} x ${productName}`;
 
     await tx
       .update(assetsTable)
@@ -129,8 +126,8 @@ export async function removeAssets(ids: string[], userId: string) {
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
-      assetId: ids[0],
-      action: "status_change",
+      productId,
+      action: "retired",
       performedBy: userId,
       note,
       metadata: { assetIds: ids, quantity: ids.length },
@@ -144,7 +141,7 @@ export async function getAssetHistory(assetId: string) {
   const logs = await db
     .select()
     .from(inventoryLogsTable)
-    .where(eq(inventoryLogsTable.assetId, assetId))
+    .where(sql`${inventoryLogsTable.metadata}->'assetIds' ? ${assetId}`)
     .orderBy(desc(inventoryLogsTable.createdAt));
 
   const asset = await db
@@ -223,6 +220,7 @@ export async function updateProduct(
 }
 
 export async function listLogs(productId?: string) {
+  console.log(productId);
   const query = db
     .select({
       id: inventoryLogsTable.id,
@@ -235,12 +233,11 @@ export async function listLogs(productId?: string) {
     })
     .from(inventoryLogsTable)
     .leftJoin(usersTable, eq(inventoryLogsTable.performedBy, usersTable.id))
-    .leftJoin(assetsTable, eq(inventoryLogsTable.assetId, assetsTable.id))
     .orderBy(desc(inventoryLogsTable.createdAt))
     .limit(50);
 
   if (productId) {
-    return await query.where(eq(assetsTable.productId, productId));
+    return await query.where(eq(inventoryLogsTable.productId, productId));
   }
 
   return await query;
@@ -251,8 +248,11 @@ export async function getAssetSummary() {
     .select({
       total: sql`count(*)`,
       available: sql`sum(case when status = 'available' then 1 else 0 end)`,
+      in_use: sql`sum(case when status = 'in_use' then 1 else 0 end)`,
       damaged: sql`sum(case when status = 'damaged' then 1 else 0 end)`,
       maintenance: sql`sum(case when status = 'maintenance' then 1 else 0 end)`,
+      restored: sql`sum(case when status = 'restored' then 1 else 0 end)`,
+      retired: sql`sum(case when status = 'retired' then 1 else 0 end)`,
     })
     .from(assetsTable);
 

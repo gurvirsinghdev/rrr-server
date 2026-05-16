@@ -7,7 +7,7 @@ export const createAssetSchema = z.object({
 
 export const updateAssetStatusSchema = z.object({
   ids: z.array(z.string()).min(1),
-  status: z.enum(["available", "maintenance", "damaged"]),
+  status: z.enum(["maintenance", "damaged", "restored", "retired"]),
 });
 
 export const removeAssetsSchema = z.object({

@@ -38,10 +38,10 @@ export const productsTable = pgTable("products", {
 
 export const assetStatusEnum = pgEnum("asset_status_enum", [
   "available",
-  "reserved",
   "in_use",
   "maintenance",
   "damaged",
+  "restored",
   "retired",
 ]);
 
@@ -268,15 +268,14 @@ export const inventoryActionEnum = pgEnum("inventory_action_enum", [
   "assigned",
   "returned",
   "maintenance",
-  "damage",
-  "status_change",
+  "damaged",
+  "restored",
+  "retired",
 ]);
 
 export const inventoryLogsTable = pgTable("inventory_logs", {
   id: text("id").primaryKey().notNull(),
-  assetId: text("asset_id")
-    .notNull()
-    .references(() => assetsTable.id),
+  productId: text("product_id").references(() => productsTable.id),
   action: inventoryActionEnum("action").notNull(),
   performedBy: text("performed_by").references(() => usersTable.id),
   note: text("note"),

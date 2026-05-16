@@ -377,7 +377,6 @@ export async function assignAssetsToJob(jobId: string, assetIds: string[], userI
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
-      assetId: assetIds[0],
       action: "assigned",
       performedBy: userId,
       note: `Assigned ${assetIds.length} asset(s) to job`,
@@ -408,7 +407,6 @@ export async function returnAssetsFromJob(jobId: string, assetIds: string[], use
 
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
-      assetId: assetIds[0],
       action: "returned",
       performedBy: userId,
       note: `Returned ${assetIds.length} asset(s) from job`,
