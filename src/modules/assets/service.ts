@@ -14,6 +14,13 @@ import {
 
 export async function createAssets(productId: string, quantity: number, userId: string) {
   return await db.transaction(async (tx) => {
+    const [product] = await tx
+      .select({ name: productsTable.name })
+      .from(productsTable)
+      .where(eq(productsTable.id, productId))
+      .limit(1);
+    const productName = product?.name ?? "Unknown Item";
+
     const values = Array.from({ length: quantity }).map(() => ({
       id: uuidv7(),
       productId,
@@ -26,7 +33,7 @@ export async function createAssets(productId: string, quantity: number, userId: 
       assetId: values[0].id,
       action: "created",
       performedBy: userId,
-      note: `Created ${quantity} asset(s)`,
+      note: `Created ${quantity} x ${productName}`,
       metadata: { assetIds: values.map((v) => v.id), productId, quantity },
     });
 
@@ -59,6 +66,24 @@ export async function updateAssetStatus(
   };
 
   await db.transaction(async (tx) => {
+    const assetsWithProducts = await tx
+      .select({
+        assetId: assetsTable.id,
+        productName: productsTable.name,
+      })
+      .from(assetsTable)
+      .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
+      .where(inArray(assetsTable.id, ids));
+
+    const productCounts = new Map<string, number>();
+    for (const a of assetsWithProducts) {
+      productCounts.set(a.productName, (productCounts.get(a.productName) ?? 0) + 1);
+    }
+    const productParts = [...productCounts.entries()]
+      .map(([name, count]) => `${count} x ${name}`)
+      .join(", ");
+    const note = `Updated ${productParts} to ${status}`;
+
     await tx
       .update(assetsTable)
       .set({ status: status as any })
@@ -69,7 +94,7 @@ export async function updateAssetStatus(
       assetId: ids[0],
       action: actionMap[status] ?? "status_change",
       performedBy: userId,
-      note: `Updated ${ids.length} asset(s) status to ${status}`,
+      note,
       metadata: { assetIds: ids, newStatus: status, quantity: ids.length },
     });
   });
@@ -79,6 +104,24 @@ export async function updateAssetStatus(
 
 export async function removeAssets(ids: string[], userId: string) {
   await db.transaction(async (tx) => {
+    const assetsWithProducts = await tx
+      .select({
+        assetId: assetsTable.id,
+        productName: productsTable.name,
+      })
+      .from(assetsTable)
+      .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
+      .where(inArray(assetsTable.id, ids));
+
+    const productCounts = new Map<string, number>();
+    for (const a of assetsWithProducts) {
+      productCounts.set(a.productName, (productCounts.get(a.productName) ?? 0) + 1);
+    }
+    const productParts = [...productCounts.entries()]
+      .map(([name, count]) => `${count} x ${name}`)
+      .join(", ");
+    const note = `Removed ${productParts}`;
+
     await tx
       .update(assetsTable)
       .set({ isDeleted: true })
@@ -89,7 +132,7 @@ export async function removeAssets(ids: string[], userId: string) {
       assetId: ids[0],
       action: "status_change",
       performedBy: userId,
-      note: `Removed ${ids.length} asset(s)`,
+      note,
       metadata: { assetIds: ids, quantity: ids.length },
     });
   });
