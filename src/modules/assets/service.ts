@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
 import { db } from "@/db/index.js";
 import {
@@ -9,6 +9,7 @@ import {
   jobsTable,
   customersTable,
   locationsTable,
+  usersTable,
 } from "@/db/schema.js";
 
 export async function createAssets(productId: string, quantity: number, userId: string) {
@@ -140,4 +141,77 @@ export async function getAssetHistory(assetId: string) {
     logs,
     jobInteractions,
   };
+}
+
+export async function createProduct(data: {
+  name: string;
+  sku?: string;
+  metadata?: any;
+}) {
+  const existing = await db
+    .select()
+    .from(productsTable)
+    .where(sql`lower(name) = lower(${data.name})`)
+    .limit(1);
+
+  if (existing.length > 0) {
+    throw new Error("Product already exists");
+  }
+
+  const product = { id: uuidv7(), ...data };
+  await db.insert(productsTable).values(product);
+  return product;
+}
+
+export async function listProducts() {
+  return await db.select().from(productsTable);
+}
+
+export async function updateProduct(
+  id: string,
+  data: {
+    name?: string;
+    sku?: string;
+    metadata?: any;
+    isActive?: boolean;
+  },
+) {
+  await db.update(productsTable).set(data).where(eq(productsTable.id, id));
+}
+
+export async function listLogs(productId?: string) {
+  const query = db
+    .select({
+      id: inventoryLogsTable.id,
+      action: inventoryLogsTable.action,
+      note: inventoryLogsTable.note,
+      metadata: inventoryLogsTable.metadata,
+      createdAt: inventoryLogsTable.createdAt,
+      performedByFirstName: usersTable.firstName,
+      performedByLastName: usersTable.lastName,
+    })
+    .from(inventoryLogsTable)
+    .leftJoin(usersTable, eq(inventoryLogsTable.performedBy, usersTable.id))
+    .leftJoin(assetsTable, eq(inventoryLogsTable.assetId, assetsTable.id))
+    .orderBy(desc(inventoryLogsTable.createdAt))
+    .limit(50);
+
+  if (productId) {
+    return await query.where(eq(assetsTable.productId, productId));
+  }
+
+  return await query;
+}
+
+export async function getAssetSummary() {
+  const result = await db
+    .select({
+      total: sql`count(*)`,
+      available: sql`sum(case when status = 'available' then 1 else 0 end)`,
+      damaged: sql`sum(case when status = 'damaged' then 1 else 0 end)`,
+      maintenance: sql`sum(case when status = 'maintenance' then 1 else 0 end)`,
+    })
+    .from(assetsTable);
+
+  return result[0];
 }

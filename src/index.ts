@@ -12,10 +12,9 @@ import { routesRouter } from "./modules/routes/routes.js";
 import { dispatchRouter } from "./modules/routes/dispatch.js";
 import { driverRouter } from "./modules/routes/driver.js";
 import { assetsRouter } from "./modules/assets/routes.js";
+import { inventoryRouter } from "./modules/assets/inventory.js";
 import { invoicesRouter } from "./modules/invoices/routes.js";
 import { uploadsRouter } from "./modules/uploads/routes.js";
-
-import { inventoryRouter } from "./routes/inventoryRouter.js";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
@@ -33,10 +32,9 @@ app.route("/routes", routesRouter);
 app.route("/dispatch", dispatchRouter);
 app.route("/drivers", driverRouter);
 app.route("/assets", assetsRouter);
+app.route("/inventory", inventoryRouter);
 app.route("/invoices", invoicesRouter);
 app.route("/uploads", uploadsRouter);
-
-app.route("/inventory", inventoryRouter);
 
 serve(
   {
