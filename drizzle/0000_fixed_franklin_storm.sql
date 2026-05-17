@@ -115,6 +115,7 @@ CREATE TABLE "jobs" (
 	"id" text PRIMARY KEY NOT NULL,
 	"customer_id" text NOT NULL,
 	"location_id" text NOT NULL,
+	"driver_id" text,
 	"scheduled_date" timestamp NOT NULL,
 	"status" "job_status_enum" DEFAULT 'scheduled',
 	"notes" text,
@@ -127,6 +128,7 @@ CREATE TABLE "locations" (
 	"customer_id" text NOT NULL,
 	"name" text,
 	"address" text NOT NULL,
+	"google_place_id" text NOT NULL,
 	"contact_name" text,
 	"contact_phone" text,
 	"notes" text,
@@ -193,6 +195,7 @@ ALTER TABLE "job_schedules" ADD CONSTRAINT "job_schedules_customer_id_customers_
 ALTER TABLE "job_schedules" ADD CONSTRAINT "job_schedules_location_id_locations_id_fk" FOREIGN KEY ("location_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "jobs" ADD CONSTRAINT "jobs_customer_id_customers_id_fk" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "jobs" ADD CONSTRAINT "jobs_location_id_locations_id_fk" FOREIGN KEY ("location_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "jobs" ADD CONSTRAINT "jobs_driver_id_users_id_fk" FOREIGN KEY ("driver_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "locations" ADD CONSTRAINT "locations_customer_id_customers_id_fk" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "route_jobs" ADD CONSTRAINT "route_jobs_route_id_routes_id_fk" FOREIGN KEY ("route_id") REFERENCES "public"."routes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "route_jobs" ADD CONSTRAINT "route_jobs_job_id_jobs_id_fk" FOREIGN KEY ("job_id") REFERENCES "public"."jobs"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

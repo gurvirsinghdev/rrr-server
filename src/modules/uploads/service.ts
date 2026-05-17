@@ -9,38 +9,44 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function storeUpload(
-  file: Blob,
-  jobId: string,
-  filename?: string,
-): Promise<{ id: string; url: string }> {
-  const id = uuidv7();
-  const ext = (filename ?? "file.jpg").split(".").pop() ?? "jpg";
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
+const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
+export async function storeUpload(
+  file: File,
+  jobId: string,
+): Promise<{ id: string; url: string }> {
+  if (!ALLOWED_TYPES.has(file.type)) {
+    const err = new Error("Only image files are allowed") as any;
+    err.status = 400;
+    throw err;
+  }
+  if (file.size > MAX_BYTES) {
+    const err = new Error("File exceeds the 10 MB limit") as any;
+    err.status = 400;
+    throw err;
+  }
+
+  const id = uuidv7();
   const buffer = Buffer.from(await file.arrayBuffer());
+
   const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: "rrr-photos",
-        public_id: id,
-        resource_type: "image",
-        format: ext,
-      },
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "rrr-photos", public_id: id, resource_type: "image" },
       (error, result) => {
         if (error) reject(error);
         else resolve(result!);
       },
     );
-    uploadStream.end(buffer);
+    stream.end(buffer);
   });
 
-  const url = result.secure_url;
-
-  await db.insert(jobPhotosTable).values({
-    id,
-    jobId,
-    url,
-  });
-
-  return { id, url };
+  await db.insert(jobPhotosTable).values({ id, jobId, url: result.secure_url });
+  return { id, url: result.secure_url };
 }

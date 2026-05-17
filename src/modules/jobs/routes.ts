@@ -7,6 +7,7 @@ import {
   addNoteSchema,
   assignAssetsSchema,
   returnAssetsSchema,
+  assignDriverSchema,
 } from "./validation.js";
 import {
   listJobs,
@@ -15,10 +16,12 @@ import {
   startJob,
   completeJob,
   failJob,
+  cancelJob,
   addJobNote,
   assignAssetsToJob,
   returnAssetsFromJob,
   getJobAssets,
+  assignDriver,
 } from "./service.js";
 import { authMiddleware, isAdmin } from "@/middleware/authMiddleware.js";
 import { parseBody, getUserId } from "@/lib/helpers.js";
@@ -114,6 +117,17 @@ jobsRouter.post("/:jobId/fail", async (c) => {
   }
 });
 
+// POST /jobs/:jobId/cancel (admin only)
+jobsRouter.post("/:jobId/cancel", isAdmin, async (c) => {
+  const { jobId } = c.req.param();
+  try {
+    const result = await cancelJob(jobId, getUserId(c));
+    return c.json(result);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 400);
+  }
+});
+
 // POST /jobs/:jobId/notes
 jobsRouter.post("/:jobId/notes", async (c) => {
   const { jobId } = c.req.param();
@@ -157,6 +171,20 @@ jobsRouter.post("/:jobId/return-assets", isAdmin, async (c) => {
       getUserId(c),
     );
     return c.json(result);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 400);
+  }
+});
+
+// POST /jobs/:jobId/assign-driver (admin only)
+jobsRouter.post("/:jobId/assign-driver", isAdmin, async (c) => {
+  const { jobId } = c.req.param();
+  const { data, errorResponse } = await parseBody(c, assignDriverSchema);
+  if (errorResponse) return errorResponse;
+
+  try {
+    const job = await assignDriver(jobId, data.driverId);
+    return c.json({ job });
   } catch (e: any) {
     return c.json({ error: e.message }, 400);
   }

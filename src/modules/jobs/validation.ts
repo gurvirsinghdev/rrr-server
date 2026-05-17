@@ -49,3 +49,7 @@ export const assignAssetsSchema = z.object({
 export const returnAssetsSchema = z.object({
   assetIds: z.array(z.string()).min(1),
 });
+
+export const assignDriverSchema = z.object({
+  driverId: z.string().min(1),
+});

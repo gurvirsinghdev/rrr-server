@@ -13,7 +13,53 @@ import {
   jobItemsTable,
   invoiceItemsTable,
   inventoryLogsTable,
+  usersTable,
 } from "@/db/schema.js";
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function autoReturnJobAssets(
+  tx: Tx,
+  jobId: string,
+  trigger: "job_completed" | "job_failed" | "job_cancelled",
+) {
+  const assigned = await tx
+    .select({
+      assetId: jobAssetsTable.assetId,
+      productId: assetsTable.productId,
+      productName: productsTable.name,
+    })
+    .from(jobAssetsTable)
+    .innerJoin(assetsTable, eq(jobAssetsTable.assetId, assetsTable.id))
+    .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
+    .where(eq(jobAssetsTable.jobId, jobId));
+
+  if (assigned.length === 0) return;
+
+  const assetIds = assigned.map((a) => a.assetId);
+  const productIds = [...new Set(assigned.map((a) => a.productId))];
+  const breakdown = buildAssetBreakdown(
+    assigned.map((a) => ({
+      id: a.assetId,
+      productId: a.productId,
+      productName: a.productName,
+    })),
+  );
+
+  await tx.delete(jobAssetsTable).where(eq(jobAssetsTable.jobId, jobId));
+  await tx
+    .update(assetsTable)
+    .set({ status: "available", currentJobId: null })
+    .where(inArray(assetsTable.id, assetIds));
+
+  await tx.insert(inventoryLogsTable).values({
+    id: uuidv7(),
+    action: "returned",
+    performedBy: null,
+    note: `Auto-returned ${assetIds.length} ${assetIds.length === 1 ? "asset" : "assets"} — ${trigger.replace(/_/g, " ")}`,
+    metadata: { jobId, productIds, breakdown, automatic: true, trigger },
+  });
+}
 
 export function jobBaseQuery() {
   return db
@@ -137,8 +183,8 @@ export async function startJob(jobId: string, userId: string) {
       .limit(1);
 
     if (!job) throw new Error("Job not found");
-    if (job.status !== "scheduled")
-      throw new Error("Job must be in scheduled status to start");
+    if (!["scheduled", "assigned"].includes(job.status!))
+      throw new Error("Job must be in scheduled or assigned status to start");
 
     await tx
       .update(jobsTable)
@@ -279,20 +325,7 @@ export async function completeJob(
       invoiceItemsCreated.push({ id: iiId, ...charge, total });
     }
 
-    // Auto-return assigned assets
-    const assignedAssets = await tx
-      .select({ assetId: jobAssetsTable.assetId })
-      .from(jobAssetsTable)
-      .where(eq(jobAssetsTable.jobId, jobId));
-
-    if (assignedAssets.length > 0) {
-      const ids = assignedAssets.map((a) => a.assetId);
-      await tx.delete(jobAssetsTable).where(eq(jobAssetsTable.jobId, jobId));
-      await tx
-        .update(assetsTable)
-        .set({ status: "available", currentJobId: null })
-        .where(inArray(assetsTable.id, ids));
-    }
+    await autoReturnJobAssets(tx, jobId, "job_completed");
 
     const [event] = await tx
       .select()
@@ -340,6 +373,8 @@ export async function failJob(
       .set({ jobId })
       .where(inArray(jobPhotosTable.id, data.mediaIds));
 
+    await autoReturnJobAssets(tx, jobId, "job_failed");
+
     const [event] = await tx
       .select()
       .from(jobEventsTable)
@@ -347,6 +382,29 @@ export async function failJob(
       .limit(1);
 
     return event;
+  });
+}
+
+export async function cancelJob(jobId: string, userId: string) {
+  return await db.transaction(async (tx) => {
+    const [job] = await tx
+      .select({ id: jobsTable.id, status: jobsTable.status })
+      .from(jobsTable)
+      .where(eq(jobsTable.id, jobId))
+      .limit(1);
+
+    if (!job) throw new Error("Job not found");
+    if (!["scheduled", "assigned", "in_progress"].includes(job.status!))
+      throw new Error("Job cannot be cancelled in its current status");
+
+    await tx
+      .update(jobsTable)
+      .set({ status: "cancelled", updatedAt: new Date() })
+      .where(eq(jobsTable.id, jobId));
+
+    await autoReturnJobAssets(tx, jobId, "job_cancelled");
+
+    return { cancelled: true };
   });
 }
 
@@ -369,6 +427,44 @@ export async function addJobNote(jobId: string, userId: string, note: string) {
     .limit(1);
 
   return event;
+}
+
+export async function assignDriver(
+  jobId: string,
+  driverId: string,
+) {
+  return await db.transaction(async (tx) => {
+    const [job] = await tx
+      .select({ id: jobsTable.id, status: jobsTable.status })
+      .from(jobsTable)
+      .where(eq(jobsTable.id, jobId))
+      .limit(1);
+
+    if (!job) throw new Error("Job not found");
+    if (["completed", "failed", "cancelled"].includes(job.status!))
+      throw new Error("Cannot assign driver to a finished job");
+
+    const [driver] = await tx
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.id, driverId))
+      .limit(1);
+
+    if (!driver) throw new Error("Driver not found");
+
+    await tx
+      .update(jobsTable)
+      .set({ driverId, status: "assigned", updatedAt: new Date() })
+      .where(eq(jobsTable.id, jobId));
+
+    const [updated] = await tx
+      .select()
+      .from(jobsTable)
+      .where(eq(jobsTable.id, jobId))
+      .limit(1);
+
+    return updated;
+  });
 }
 
 type AssetBreakdownItem = {

@@ -107,6 +107,7 @@ export const jobsTable = pgTable("jobs", {
   locationId: text("location_id")
     .notNull()
     .references(() => locationsTable.id),
+  driverId: text("driver_id").references(() => usersTable.id),
   scheduledDate: timestamp("scheduled_date").notNull(),
   status: jobStatusEnum("status").default("scheduled"),
   notes: text("notes"),
