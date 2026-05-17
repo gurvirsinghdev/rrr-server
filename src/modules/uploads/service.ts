@@ -7,7 +7,10 @@ import { jobPhotosTable } from "@/db/schema.js";
 
 const UPLOAD_DIR = join(process.cwd(), "uploads");
 
-export async function storeUpload(file: Blob, filename?: string): Promise<{ id: string; url: string }> {
+export async function storeUpload(
+  file: Blob,
+  filename?: string,
+): Promise<{ id: string; url: string }> {
   await mkdir(UPLOAD_DIR, { recursive: true });
 
   const id = uuidv7();

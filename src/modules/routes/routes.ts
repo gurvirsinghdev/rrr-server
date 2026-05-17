@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 import type { UserJWTPayload } from "@/types.js";
-import { createRouteSchema, addJobSchema, reorderSchema } from "./validation.js";
+import {
+  createRouteSchema,
+  addJobSchema,
+  reorderSchema,
+} from "./validation.js";
 import {
   createRoute,
   listRoutes,
@@ -57,7 +61,11 @@ routesRouter.post("/:id/add-job", isAdmin, async (c) => {
   if (errorResponse) return errorResponse;
 
   try {
-    const result = await addJobToRoute(c.req.param("id")!, data.jobId, data.order);
+    const result = await addJobToRoute(
+      c.req.param("id")!,
+      data.jobId,
+      data.order,
+    );
     return c.json(result, 201);
   } catch (e: any) {
     return c.json({ error: e.message }, 400);

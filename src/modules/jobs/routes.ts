@@ -151,7 +151,11 @@ jobsRouter.post("/:jobId/return-assets", isAdmin, async (c) => {
   if (errorResponse) return errorResponse;
 
   try {
-    const result = await returnAssetsFromJob(jobId, data.assetIds, getUserId(c));
+    const result = await returnAssetsFromJob(
+      jobId,
+      data.assetIds,
+      getUserId(c),
+    );
     return c.json(result);
   } catch (e: any) {
     return c.json({ error: e.message }, 400);

@@ -103,7 +103,6 @@ export async function updateAssetStatus(
   return { updated: ids.length };
 }
 
-
 export async function getAssetHistory(assetId: string) {
   const logs = await db
     .select()

@@ -86,12 +86,8 @@
           "name": "assets_product_id_products_id_fk",
           "tableFrom": "assets",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -188,12 +184,8 @@
           "name": "driver_shifts_driver_id_users_id_fk",
           "tableFrom": "driver_shifts",
           "tableTo": "users",
-          "columnsFrom": [
-            "driver_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["driver_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -259,12 +251,8 @@
           "name": "inventory_logs_product_id_products_id_fk",
           "tableFrom": "inventory_logs",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -272,12 +260,8 @@
           "name": "inventory_logs_performed_by_users_id_fk",
           "tableFrom": "inventory_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "performed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["performed_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -349,12 +333,8 @@
           "name": "invoice_items_invoice_id_invoices_id_fk",
           "tableFrom": "invoice_items",
           "tableTo": "invoices",
-          "columnsFrom": [
-            "invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -362,12 +342,8 @@
           "name": "invoice_items_job_id_jobs_id_fk",
           "tableFrom": "invoice_items",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -443,12 +419,8 @@
           "name": "invoices_customer_id_customers_id_fk",
           "tableFrom": "invoices",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -458,9 +430,7 @@
         "invoices_invoice_number_unique": {
           "name": "invoices_invoice_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "invoice_number"
-          ]
+          "columns": ["invoice_number"]
         }
       },
       "policies": {},
@@ -503,12 +473,8 @@
           "name": "job_assets_job_id_jobs_id_fk",
           "tableFrom": "job_assets",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -516,12 +482,8 @@
           "name": "job_assets_asset_id_assets_id_fk",
           "tableFrom": "job_assets",
           "tableTo": "assets",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -581,12 +543,8 @@
           "name": "job_events_job_id_jobs_id_fk",
           "tableFrom": "job_events",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -594,12 +552,8 @@
           "name": "job_events_performed_by_users_id_fk",
           "tableFrom": "job_events",
           "tableTo": "users",
-          "columnsFrom": [
-            "performed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["performed_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -658,12 +612,8 @@
           "name": "job_items_job_id_jobs_id_fk",
           "tableFrom": "job_items",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -671,12 +621,8 @@
           "name": "job_items_product_id_products_id_fk",
           "tableFrom": "job_items",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -730,12 +676,8 @@
           "name": "job_photos_job_id_jobs_id_fk",
           "tableFrom": "job_photos",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -801,12 +743,8 @@
           "name": "job_schedules_customer_id_customers_id_fk",
           "tableFrom": "job_schedules",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -814,12 +752,8 @@
           "name": "job_schedules_location_id_locations_id_fk",
           "tableFrom": "job_schedules",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -893,12 +827,8 @@
           "name": "jobs_customer_id_customers_id_fk",
           "tableFrom": "jobs",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -906,12 +836,8 @@
           "name": "jobs_location_id_locations_id_fk",
           "tableFrom": "jobs",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -994,12 +920,8 @@
           "name": "locations_customer_id_customers_id_fk",
           "tableFrom": "locations",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1104,12 +1026,8 @@
           "name": "route_jobs_route_id_routes_id_fk",
           "tableFrom": "route_jobs",
           "tableTo": "routes",
-          "columnsFrom": [
-            "route_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["route_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1117,12 +1035,8 @@
           "name": "route_jobs_job_id_jobs_id_fk",
           "tableFrom": "route_jobs",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1183,12 +1097,8 @@
           "name": "routes_driver_id_users_id_fk",
           "tableFrom": "routes",
           "tableTo": "users",
-          "columnsFrom": [
-            "driver_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["driver_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1276,9 +1186,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1315,31 +1223,17 @@
     "public.invoice_status_enum": {
       "name": "invoice_status_enum",
       "schema": "public",
-      "values": [
-        "draft",
-        "sent",
-        "paid",
-        "void"
-      ]
+      "values": ["draft", "sent", "paid", "void"]
     },
     "public.job_event_type_enum": {
       "name": "job_event_type_enum",
       "schema": "public",
-      "values": [
-        "started",
-        "completed",
-        "failed",
-        "note_added"
-      ]
+      "values": ["started", "completed", "failed", "note_added"]
     },
     "public.job_photo_type_enum": {
       "name": "job_photo_type_enum",
       "schema": "public",
-      "values": [
-        "before",
-        "after",
-        "failure"
-      ]
+      "values": ["before", "after", "failure"]
     },
     "public.job_status_enum": {
       "name": "job_status_enum",
@@ -1356,10 +1250,7 @@
     "public.user_role_enum": {
       "name": "user_role_enum",
       "schema": "public",
-      "values": [
-        "admin",
-        "driver"
-      ]
+      "values": ["admin", "driver"]
     }
   },
   "schemas": {},

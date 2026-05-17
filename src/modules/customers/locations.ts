@@ -1,10 +1,6 @@
 import { Hono } from "hono";
 import { createLocationSchema } from "./validation.js";
-import {
-  createLocation,
-  listLocations,
-  getLocationById,
-} from "./service.js";
+import { createLocation, listLocations, getLocationById } from "./service.js";
 import { authMiddleware, isAdmin } from "@/middleware/authMiddleware.js";
 import { parseBody } from "@/lib/helpers.js";
 

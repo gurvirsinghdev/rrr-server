@@ -17,7 +17,11 @@ assetsRouter.post("/", isAdmin, async (c) => {
   const { data, errorResponse } = await parseBody(c, createAssetSchema);
   if (errorResponse) return errorResponse;
 
-  const result = await createAssets(data.productId, data.quantity, getUserId(c));
+  const result = await createAssets(
+    data.productId,
+    data.quantity,
+    getUserId(c),
+  );
   return c.json({ status: true, count: result.length }, 201);
 });
 
@@ -43,5 +47,3 @@ assetsRouter.post("/status", isAdmin, async (c) => {
   const result = await updateAssetStatus(data.ids, data.status, getUserId(c));
   return c.json(result);
 });
-
-

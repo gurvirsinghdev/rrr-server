@@ -72,7 +72,11 @@ export async function getRouteById(routeId: string) {
   return { ...route, jobs };
 }
 
-export async function addJobToRoute(routeId: string, jobId: string, order?: number) {
+export async function addJobToRoute(
+  routeId: string,
+  jobId: string,
+  order?: number,
+) {
   const existing = await db
     .select({ id: routeJobsTable.id })
     .from(routeJobsTable)
@@ -90,7 +94,8 @@ export async function addJobToRoute(routeId: string, jobId: string, order?: numb
     .orderBy(asc(routeJobsTable.order));
 
   const nextOrder =
-    order ?? (maxOrder.length > 0 ? maxOrder[maxOrder.length - 1].order + 1 : 0);
+    order ??
+    (maxOrder.length > 0 ? maxOrder[maxOrder.length - 1].order + 1 : 0);
 
   const id = uuidv7();
   await db.insert(routeJobsTable).values({
@@ -159,10 +164,7 @@ export async function getDriverRoute(driverId: string, date?: Date) {
     .select()
     .from(routesTable)
     .where(
-      and(
-        eq(routesTable.driverId, driverId),
-        eq(routesTable.status, "active"),
-      ),
+      and(eq(routesTable.driverId, driverId), eq(routesTable.status, "active")),
     )
     .limit(1);
 
