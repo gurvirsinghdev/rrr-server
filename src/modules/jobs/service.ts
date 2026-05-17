@@ -70,6 +70,7 @@ export function jobBaseQuery() {
       locationId: jobsTable.locationId,
       locationAddress: locationsTable.address,
       locationName: locationsTable.name,
+      driverId: jobsTable.driverId,
       scheduledDate: jobsTable.scheduledDate,
       status: jobsTable.status,
       notes: jobsTable.notes,
@@ -436,7 +437,11 @@ export async function assignDriver(
 ) {
   return await db.transaction(async (tx) => {
     const [job] = await tx
-      .select({ id: jobsTable.id, status: jobsTable.status })
+      .select({
+        id: jobsTable.id,
+        status: jobsTable.status,
+        driverId: jobsTable.driverId,
+      })
       .from(jobsTable)
       .where(eq(jobsTable.id, jobId))
       .limit(1);
@@ -444,6 +449,8 @@ export async function assignDriver(
     if (!job) throw new Error("Job not found");
     if (["completed", "failed", "cancelled"].includes(job.status!))
       throw new Error("Cannot assign driver to a finished job");
+    if (job.driverId === driverId)
+      throw new Error("Driver is already assigned to this job");
 
     const [driver] = await tx
       .select({
