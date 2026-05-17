@@ -69,7 +69,6 @@ export function jobBaseQuery() {
       customerName: customersTable.name,
       locationId: jobsTable.locationId,
       locationAddress: locationsTable.address,
-      locationName: locationsTable.name,
       driverId: jobsTable.driverId,
       scheduledDate: jobsTable.scheduledDate,
       status: jobsTable.status,

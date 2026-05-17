@@ -28,7 +28,6 @@ export async function getCustomerById(id: string) {
 
 export async function createLocation(data: {
   customerId: string;
-  name?: string;
   address: string;
   locationId: string;
   contactName?: string;

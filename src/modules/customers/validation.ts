@@ -8,7 +8,6 @@ export const createCustomerSchema = z.object({
 
 export const createLocationSchema = z.object({
   customerId: z.string().min(1),
-  name: z.string().optional(),
   address: z.string().min(1),
   locationId: z.string().min(1),
   contactName: z.string().optional(),

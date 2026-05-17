@@ -151,7 +151,6 @@ export async function getAssetHistory(assetId: string) {
 
 export async function createProduct(data: {
   name: string;
-  sku?: string;
   metadata?: any;
 }) {
   const existing = await db
@@ -177,7 +176,6 @@ export async function updateProduct(
   id: string,
   data: {
     name?: string;
-    sku?: string;
     metadata?: any;
     isActive?: boolean;
   },

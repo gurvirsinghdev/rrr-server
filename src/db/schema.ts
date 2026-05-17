@@ -29,7 +29,6 @@ export const usersTable = pgTable("users", {
 export const productsTable = pgTable("products", {
   id: text("id").primaryKey().notNull(),
   name: text("name").notNull(),
-  sku: text("sku"),
   metadata: jsonb("metadata"),
   isActive: boolean("is_active").default(true),
 
@@ -78,7 +77,6 @@ export const locationsTable = pgTable("locations", {
   customerId: text("customer_id")
     .notNull()
     .references(() => customersTable.id),
-  name: text("name"),
   address: text("address").notNull(),
   locationId: text("google_place_id").notNull(),
   contactName: text("contact_name"),

@@ -12,13 +12,11 @@ export const updateAssetStatusSchema = z.object({
 
 export const createProductSchema = z.object({
   name: z.string().min(1),
-  sku: z.string().optional(),
   metadata: z.any().optional(),
 });
 
 export const updateProductSchema = z.object({
   name: z.string().min(1).optional(),
-  sku: z.string().optional(),
   metadata: z.any().optional(),
   isActive: z.boolean().optional(),
 });
