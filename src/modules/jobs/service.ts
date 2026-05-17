@@ -432,6 +432,7 @@ export async function addJobNote(jobId: string, userId: string, note: string) {
 export async function assignDriver(
   jobId: string,
   driverId: string,
+  userId: string,
 ) {
   return await db.transaction(async (tx) => {
     const [job] = await tx
@@ -445,7 +446,11 @@ export async function assignDriver(
       throw new Error("Cannot assign driver to a finished job");
 
     const [driver] = await tx
-      .select({ id: usersTable.id })
+      .select({
+        id: usersTable.id,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+      })
       .from(usersTable)
       .where(eq(usersTable.id, driverId))
       .limit(1);
@@ -457,13 +462,31 @@ export async function assignDriver(
       .set({ driverId, status: "assigned", updatedAt: new Date() })
       .where(eq(jobsTable.id, jobId));
 
+    const eventId = uuidv7();
+    const driverName = [driver.firstName, driver.lastName]
+      .filter(Boolean)
+      .join(" ") || driver.id;
+    await tx.insert(jobEventsTable).values({
+      id: eventId,
+      jobId,
+      type: "driver_assigned",
+      notes: `Assigned driver ${driverName}`,
+      performedBy: userId,
+    });
+
     const [updated] = await tx
       .select()
       .from(jobsTable)
       .where(eq(jobsTable.id, jobId))
       .limit(1);
 
-    return updated;
+    const [event] = await tx
+      .select()
+      .from(jobEventsTable)
+      .where(eq(jobEventsTable.id, eventId))
+      .limit(1);
+
+    return { job: updated, event };
   });
 }
 
@@ -525,8 +548,19 @@ export async function assignAssetsToJob(
     if (assets.length !== assetIds.length)
       throw new Error("Some assets not found");
     const unavailable = assets.filter((a) => a.status !== "available");
-    if (unavailable.length > 0)
-      throw new Error("Some assets are not available");
+    if (unavailable.length > 0) {
+      const productId = assets[0].productId;
+      const [product] = await tx
+        .select({ name: productsTable.name })
+        .from(productsTable)
+        .where(eq(productsTable.id, productId))
+        .limit(1);
+      const productName = product?.name ?? "this product";
+      const available = assets.length - unavailable.length;
+      throw new Error(
+        `Only ${available} of ${assetIds.length} ${productName} assets are available`,
+      );
+    }
 
     const breakdown = buildAssetBreakdown(
       await tx
@@ -551,11 +585,14 @@ export async function assignAssetsToJob(
 
     const productIds = breakdown.map((b) => b.productId);
 
+    const b = breakdown[0]!;
+    const note = `Assigned ${b.count} x ${b.productName} to a job`;
+
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       action: "assigned",
       performedBy: userId,
-      note: `Assigned ${assetIds.length} ${assetIds.length === 1 ? "asset" : "assets"} to job`,
+      note,
       metadata: { jobId, productIds, breakdown },
     });
 

@@ -1,5 +1,5 @@
 {
-  "id": "f295e374-d7b5-4e29-86c8-21c481ff9d91",
+  "id": "b84eeb4b-2f74-4cbb-bc68-8944467ac0d2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1354,7 +1354,8 @@
         "started",
         "completed",
         "failed",
-        "note_added"
+        "note_added",
+        "driver_assigned"
       ]
     },
     "public.job_photo_type_enum": {

@@ -121,6 +121,7 @@ export const jobEventTypeEnum = pgEnum("job_event_type_enum", [
   "completed",
   "failed",
   "note_added",
+  "driver_assigned",
 ]);
 
 export const jobEventsTable = pgTable("job_events", {

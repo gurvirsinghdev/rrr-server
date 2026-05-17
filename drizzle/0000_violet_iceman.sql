@@ -1,7 +1,7 @@
 CREATE TYPE "public"."asset_status_enum" AS ENUM('available', 'in_use', 'maintenance', 'damaged', 'restored', 'retired');--> statement-breakpoint
 CREATE TYPE "public"."inventory_action_enum" AS ENUM('created', 'assigned', 'returned', 'maintenance', 'damaged', 'restored', 'retired');--> statement-breakpoint
 CREATE TYPE "public"."invoice_status_enum" AS ENUM('draft', 'sent', 'paid', 'void');--> statement-breakpoint
-CREATE TYPE "public"."job_event_type_enum" AS ENUM('started', 'completed', 'failed', 'note_added');--> statement-breakpoint
+CREATE TYPE "public"."job_event_type_enum" AS ENUM('started', 'completed', 'failed', 'note_added', 'driver_assigned');--> statement-breakpoint
 CREATE TYPE "public"."job_photo_type_enum" AS ENUM('before', 'after', 'failure');--> statement-breakpoint
 CREATE TYPE "public"."job_status_enum" AS ENUM('scheduled', 'assigned', 'in_progress', 'completed', 'failed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."user_role_enum" AS ENUM('admin', 'driver');--> statement-breakpoint

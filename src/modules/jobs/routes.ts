@@ -183,8 +183,8 @@ jobsRouter.post("/:jobId/assign-driver", isAdmin, async (c) => {
   if (errorResponse) return errorResponse;
 
   try {
-    const job = await assignDriver(jobId, data.driverId);
-    return c.json({ job });
+    const result = await assignDriver(jobId, data.driverId, getUserId(c));
+    return c.json(result);
   } catch (e: any) {
     return c.json({ error: e.message }, 400);
   }
