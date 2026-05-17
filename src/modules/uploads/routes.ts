@@ -1,9 +1,6 @@
 import { Hono } from "hono";
 import { authMiddleware } from "@/middleware/authMiddleware.js";
 import { storeUpload } from "./service.js";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { existsSync } from "node:fs";
 
 export const uploadsRouter = new Hono();
 uploadsRouter.use("/", authMiddleware);
@@ -36,29 +33,4 @@ uploadsRouter.post("/", async (c) => {
     console.error("Upload error:", e);
     return c.json({ error: "Upload failed" }, 500);
   }
-});
-
-// GET /uploads/:filename - serve uploaded files
-uploadsRouter.get("/:filename", async (c) => {
-  const filename = c.req.param("filename");
-  const filepath = join(process.cwd(), "uploads", filename);
-
-  if (!existsSync(filepath)) {
-    return c.json({ error: "File not found" }, 404);
-  }
-
-  const data = await readFile(filepath);
-  const ext = filename.split(".").pop() ?? "bin";
-  const mimeTypes: Record<string, string> = {
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    png: "image/png",
-    gif: "image/gif",
-    webp: "image/webp",
-    pdf: "application/pdf",
-  };
-
-  return new Response(data, {
-    headers: { "Content-Type": mimeTypes[ext] ?? "application/octet-stream" },
-  });
 });
