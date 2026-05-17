@@ -56,7 +56,7 @@ async function autoReturnJobAssets(
     id: uuidv7(),
     action: "returned",
     performedBy: null,
-    note: `Auto-returned ${assetIds.length} ${assetIds.length === 1 ? "asset" : "assets"} — ${trigger.replace(/_/g, " ")}`,
+    note: `Job ${trigger.replace("job_", "").replace(/_/g, " ")}, returning ${assetIds.length} ${assetIds.length === 1 ? "asset" : "assets"}`,
     metadata: { jobId, productIds, breakdown, automatic: true, trigger },
   });
 }
