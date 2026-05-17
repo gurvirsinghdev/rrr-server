@@ -9,6 +9,7 @@ const UPLOAD_DIR = join(process.cwd(), "uploads");
 
 export async function storeUpload(
   file: Blob,
+  jobId: string,
   filename?: string,
 ): Promise<{ id: string; url: string }> {
   await mkdir(UPLOAD_DIR, { recursive: true });
@@ -33,7 +34,7 @@ export async function storeUpload(
 
   await db.insert(jobPhotosTable).values({
     id,
-    jobId: "", // temporary, linked later via job complete/fail
+    jobId,
     url,
   });
 
