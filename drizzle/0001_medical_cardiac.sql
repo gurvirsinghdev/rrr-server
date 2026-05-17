@@ -1,0 +1,1 @@
+ALTER TABLE "locations" ADD COLUMN "google_place_id" text NOT NULL;

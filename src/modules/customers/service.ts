@@ -30,6 +30,7 @@ export async function createLocation(data: {
   customerId: string;
   name?: string;
   address: string;
+  locationId: string;
   contactName?: string;
   contactPhone?: string;
   notes?: string;

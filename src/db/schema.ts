@@ -80,6 +80,7 @@ export const locationsTable = pgTable("locations", {
     .references(() => customersTable.id),
   name: text("name"),
   address: text("address").notNull(),
+  locationId: text("google_place_id").notNull(),
   contactName: text("contact_name"),
   contactPhone: text("contact_phone"),
   notes: text("notes"),
