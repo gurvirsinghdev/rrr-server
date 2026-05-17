@@ -20,11 +20,12 @@ uploadsRouter.post("/", async (c) => {
     const body = await c.req.parseBody();
     const file = body["file"];
 
-    if (!file || !(file instanceof File)) {
+    if (!file || typeof file === "string") {
       return c.json({ error: "No file provided" }, 400);
     }
 
-    const result = await storeUpload(file);
+    const filename = file instanceof File ? file.name : undefined;
+    const result = await storeUpload(file, filename);
     return c.json(result, 201);
   } catch (e: any) {
     console.error("Upload error:", e);

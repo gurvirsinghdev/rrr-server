@@ -7,13 +7,13 @@ import { jobPhotosTable } from "@/db/schema.js";
 
 const UPLOAD_DIR = join(process.cwd(), "uploads");
 
-export async function storeUpload(file: File): Promise<{ id: string; url: string }> {
+export async function storeUpload(file: Blob, filename?: string): Promise<{ id: string; url: string }> {
   await mkdir(UPLOAD_DIR, { recursive: true });
 
   const id = uuidv7();
-  const ext = file.name.split(".").pop() ?? "bin";
-  const filename = `${id}.${ext}`;
-  const filepath = join(UPLOAD_DIR, filename);
+  const ext = (filename ?? "file.bin").split(".").pop() ?? "bin";
+  const generatedFilename = `${id}.${ext}`;
+  const filepath = join(UPLOAD_DIR, generatedFilename);
 
   const buffer = Buffer.from(await file.arrayBuffer());
   await new Promise<void>((resolve, reject) => {
@@ -26,7 +26,7 @@ export async function storeUpload(file: File): Promise<{ id: string; url: string
     });
   });
 
-  const url = `/uploads/${filename}`;
+  const url = `/uploads/${generatedFilename}`;
 
   await db.insert(jobPhotosTable).values({
     id,

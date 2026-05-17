@@ -355,16 +355,50 @@ export async function addJobNote(jobId: string, userId: string, note: string) {
   return event;
 }
 
+type AssetBreakdownItem = {
+  productId: string;
+  productName: string;
+  count: number;
+  assetIds: string[];
+};
+
+function buildAssetBreakdown(
+  assets: { id: string; productId: string; productName: string | null }[],
+): AssetBreakdownItem[] {
+  const groups = new Map<string, { productId: string; count: number; assetIds: string[] }>();
+  for (const a of assets) {
+    const name = a.productName ?? "Unknown Item";
+    const entry = groups.get(a.productId) ?? { productId: a.productId, count: 0, assetIds: [] };
+    entry.count++;
+    entry.assetIds.push(a.id);
+    groups.set(a.productId, entry);
+  }
+  return Array.from(groups.entries()).map(([productId, v]) => ({
+    productId,
+    productName: assets.find((a) => a.productId === productId)?.productName ?? "Unknown Item",
+    count: v.count,
+    assetIds: v.assetIds,
+  }));
+}
+
 export async function assignAssetsToJob(jobId: string, assetIds: string[], userId: string) {
   return await db.transaction(async (tx) => {
     const assets = await tx
-      .select({ id: assetsTable.id, status: assetsTable.status })
+      .select({ id: assetsTable.id, status: assetsTable.status, productId: assetsTable.productId })
       .from(assetsTable)
       .where(and(inArray(assetsTable.id, assetIds), eq(assetsTable.isDeleted, false)));
 
     if (assets.length !== assetIds.length) throw new Error("Some assets not found");
     const unavailable = assets.filter((a) => a.status !== "available");
     if (unavailable.length > 0) throw new Error("Some assets are not available");
+
+    const breakdown = buildAssetBreakdown(
+      await tx
+        .select({ id: assetsTable.id, productId: assetsTable.productId, productName: productsTable.name })
+        .from(assetsTable)
+        .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
+        .where(inArray(assetsTable.id, assetIds)),
+    );
 
     await tx.insert(jobAssetsTable).values(
       assetIds.map((assetId) => ({ id: uuidv7(), jobId, assetId })),
@@ -375,12 +409,14 @@ export async function assignAssetsToJob(jobId: string, assetIds: string[], userI
       .set({ status: "in_use", currentJobId: jobId })
       .where(inArray(assetsTable.id, assetIds));
 
+    const productIds = breakdown.map((b) => b.productId);
+
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       action: "assigned",
       performedBy: userId,
-      note: `Assigned ${assetIds.length} asset(s) to job`,
-      metadata: { assetIds, jobId, quantity: assetIds.length },
+      note: `Assigned ${assetIds.length} ${assetIds.length === 1 ? "asset" : "assets"} to job`,
+      metadata: { jobId, productIds, breakdown },
     });
 
     return { assigned: assetIds.length };
@@ -396,6 +432,14 @@ export async function returnAssetsFromJob(jobId: string, assetIds: string[], use
 
     if (confirmed.length !== assetIds.length) throw new Error("Some assets not assigned to this job");
 
+    const breakdown = buildAssetBreakdown(
+      await tx
+        .select({ id: assetsTable.id, productId: assetsTable.productId, productName: productsTable.name })
+        .from(assetsTable)
+        .innerJoin(productsTable, eq(assetsTable.productId, productsTable.id))
+        .where(inArray(assetsTable.id, assetIds)),
+    );
+
     await tx
       .delete(jobAssetsTable)
       .where(and(eq(jobAssetsTable.jobId, jobId), inArray(jobAssetsTable.assetId, assetIds)));
@@ -405,12 +449,14 @@ export async function returnAssetsFromJob(jobId: string, assetIds: string[], use
       .set({ status: "available", currentJobId: null })
       .where(inArray(assetsTable.id, assetIds));
 
+    const productIds = breakdown.map((b) => b.productId);
+
     await tx.insert(inventoryLogsTable).values({
       id: uuidv7(),
       action: "returned",
       performedBy: userId,
-      note: `Returned ${assetIds.length} asset(s) from job`,
-      metadata: { assetIds, jobId, quantity: assetIds.length },
+      note: `Returned ${assetIds.length} ${assetIds.length === 1 ? "asset" : "assets"} from job`,
+      metadata: { jobId, productIds, breakdown },
     });
 
     return { returned: assetIds.length };
